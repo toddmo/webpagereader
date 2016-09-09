@@ -1,0 +1,42 @@
+  <font size="3">
+    <font face="Verdana">Once upon a time, there was a little boy, his name was Ben. On his first birthday, his parents got him a soft cuddly brown teddy bear. The little baby boy carried his teddy bear with him every where he went. At night the teddy bear always got to sleep
+      next to the baby boy in his crib. </font>
+    <p>
+      <font face="Verdana">Ben grew up and got his own bedroom and a big bed to sleep in. The teddy bear got to sleep next to him in bed every night. He was his favorite toy.&nbsp; Ben took his teddy bear everywhere he went. The teddy bear went with the boy to the zoo, all
+        the parks in the area, and even to school. </font>
+    </p>
+    <p>
+      <font face="Verdana">Ben became a teenager and he got more and more interested in video games, and going out with his friends. He stopped taking his teddy bear with him, which made the bear a little bit sad. Still, he would put his teddy bear next to him in bed every
+        night.</font>
+    </p>
+    <p>
+      <font face="Verdana">Then Ben started going camping with his friends. He would spend a few nights at a time at camp. The teddy bear missed his friend a lot on those days. When Ben was back from camping he would still remember his favorite toy and bring it to bed with
+        him.</font>
+    </p>
+    <p>
+      <font face="Verdana">Ben graduated from high school and had to go to a university in the big city. The boy was now a young man.&nbsp; He would come back home a couple of times every year for just a few days.&nbsp; Mom took all of Ben's toys and put them in a big box
+        in the attic.&nbsp; But, the teddy bear was always special so Mom decided to put him on one of the empty shelves so that when Ben was back home to visit he could see his favorite bear. Ben's visits were too short and he spent most of his time
+        visiting with his old friends, neighbors, and family. He would go to bed late at night, and often forgot to put the bear in bed anymore. The bear was so sad and missed the nice old days when he got to sleep every night next to Ben in his bed.</font>
+    </p>
+    <p>
+      <font face="Verdana">Ben, now a young man, graduated from the university and got a job in the big city. He had his own place there and would only come to visit for a few hours on the weekends. Some weekends the teddy bear would not even get to see his friend. The teddy
+        bear was so lonely.&nbsp; Many nights, he would sit alone crying in the dark, and dreaming of the days when he went everywhere with his friend and slept every night next to him. He always hoped that his friend would come to take him back to the
+        big city, but it never happened.</font>
+    </p>
+    <p>
+      <font face="Verdana">Ben met a very nice woman who worked with him and they both liked each other. They decided to get married, and after a year they had a little baby boy of their own. They loved their baby a lot and often brought him over to his grandparents' house.
+        The baby boy was just as cute as his father had been when he was a baby. </font>
+    </p>
+    <p>
+      <font face="Verdana">One day Ben remembered his favorite teddy bear and thought that his own little baby would love to have it.&nbsp; He ran to his old room, went straight to the shelf and grabbed his old friend the teddy bear. The bear was thrilled that his old friend
+        had come to visit him, but could not imagine the nice surprise that awaited him. </font>
+    </p>
+  </font>
+  <p>
+    <font size="3">
+      <font face="Verdana">When Ben gave his old bear to his baby boy to play with, the baby was so happy he wouldn't leave it alone for the rest of the day. At the end of the day, Ben and his family said goodbye to his parents and went to their own cozy home. This time the
+        teddy bear came with them. That night, and every night after that, the teddy bear got to sleep next to the baby boy in his crib. Just like his father, the baby boy would take the teddy bear with him every where he went. The teddy bear was so happy.
+        Now he had a new family that loved him.&nbsp; His old friend and his new family loved him just as much as they possibly could. </font>
+    </font>
+    <font face="Arial" size="3"></font>
+  </p>

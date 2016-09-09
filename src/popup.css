@@ -1,0 +1,32 @@
+body {
+    text-align: center;
+    background-image: -webkit-gradient(linear, left top, left bottom, from(Menu), to(ThreeDHighlight));
+    background-image: -webkit-linear-gradient(top, Menu, ThreeDHighlight);
+    background-image: -moz-linear-gradient(top, Menu, ThreeDHighlight);
+    background-image: linear-gradient(to bottom, Menu, ThreeDHighlight);
+}
+
+.btn-group {
+  white-space: nowrap; 
+  font-size: 0; /* inline-block will show ALL whitespace between elements, so shrink it!*/
+}
+
+.btn-group .btn {
+    display: inline-block;
+    font-size: 14px; /* restore font-size to whatever you are using for button text.*/
+    float: none;
+    clear: none;
+  }
+
+  .btn[disabled] {
+      opacity: 0.3;
+  }
+
+#options{
+    padding:5px;
+    
+}
+
+#optionslink{
+    text-decoration: none !important;
+}
