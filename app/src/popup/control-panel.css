@@ -1,0 +1,149 @@
+body {
+  text-align: center;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(Menu), to(ThreeDHighlight));
+  background-image: -webkit-linear-gradient(top, Menu, ThreeDHighlight);
+  background-image: -moz-linear-gradient(top, Menu, ThreeDHighlight);
+  background-image: linear-gradient(to bottom, Menu, ThreeDHighlight);
+}
+
+.panel-group {
+  margin-bottom: 0px;
+}
+
+.btn-group {
+  white-space: nowrap;
+  font-size: 0;
+  /* inline-block will show ALL whitespace between elements, so shrink it!*/
+}
+
+#options {
+  background-image: linear-gradient(to bottom, Menu, ThreeDHighlight);
+}
+
+.btn-group .btn {
+  display: inline-block;
+  font-size: 14px;
+  /* restore font-size to whatever you are using for button text.*/
+  float: none;
+  clear: none;
+
+  /*box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);*/
+
+  /* glass buttons */
+  border: 1px solid rgba(0,0,0,0.5);
+  border-bottom: 2px solid rgba(0,0,0,0.5);
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5), /* Exterior Shadow */ inset 0 1px rgba(255,255,255,0.3), /* Top light Line */ inset 0 10px rgba(255,255,255,0.2), /* Top Light Shadow */ inset 0 10px 20px rgba(255,255,255,0.25), /* Sides Light Shadow */ inset 0 -15px 30px rgba(0,0,0,0.3);
+
+}
+
+.btn[disabled] {
+  opacity: 0.5;
+}
+
+.play-control{
+  width: 95px !important;
+}
+
+#options {
+  padding: 5px;
+}
+
+#optionslink {
+  text-decoration: none !important;
+}
+
+select {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5), /* Exterior Shadow */ inset 0 1px rgba(255,255,255,0.3), /* Top light Line */ inset 0 10px rgba(255,255,255,0.2), /* Top Light Shadow */ inset 0 10px 20px rgba(255,255,255,0.25), /* Sides Light Shadow */ inset 0 -15px 30px rgba(0,0,0,0.3) !important;
+}
+
+/* checkbox into a switch */
+.switch {
+  position: relative;
+  float: right;
+  width: 30px;
+  height: 17px;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 13px;
+  width: 13px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(13px);
+  -ms-transform: translateX(13px);
+  transform: translateX(13px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 17px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* input range circle*/
+input[type=range] {
+  -webkit-appearance: none;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 300px;
+  height: 5px;
+  background: #bbb;
+  border: none;
+  border-radius: 3px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  border: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #2196F3;
+  margin-top: -6px;
+  
+}
+
+input[type=range]:focus {
+  outline: none;
+}
+
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: #ccc;
+}
