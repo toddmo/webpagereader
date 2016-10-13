@@ -197,19 +197,19 @@ WebPageReader.Reader = function () {
       self.Stop();
   }
 
-  function louder(){
+  function louder() {
     speech.Volume = Math.min(speech.Volume + 0.1, 1.0);
   }
 
-  function softer(){
+  function softer() {
     speech.Volume = Math.max(speech.Volume - 0.1, 0.0);
   }
 
-  function faster(){
+  function faster() {
     speech.Rate = Math.min(speech.Rate + 0.1, 1.5);
   }
 
-  function slower(){
+  function slower() {
     speech.Rate = Math.max(speech.Rate - 0.1, 0.0);
   }
 
@@ -260,16 +260,16 @@ WebPageReader.Reader = function () {
 
   /* event handlers */
   function Document_Onkeydown(ev) {
-    if (!active || ['INPUT', 'TEXTAREA'].indexOf(ev.srcElement.nodeName) > -1) return;
+    // ev.srcElement.contenteditable=="true"
+    if (!active || ev.shiftKey || ev.ctrlKey || ev.altKey || ['INPUT', 'TEXTAREA'].indexOf(ev.srcElement.nodeName) > -1)
+      return true;
 
     switch (ev.key) {
       case 'ArrowRight':
-        if (!ev.shiftKey)
-          advance();
+        advance();
         break;
       case 'ArrowLeft':
-        if (!ev.shiftKey)
-          retreat();
+        retreat();
         break;
       case 'Escape':
         arrest();
@@ -287,8 +287,10 @@ WebPageReader.Reader = function () {
         slower();
         break;
       default:
-        console.log(ev.key);
+        //console.log(ev.key);
+        return true;
     }
+    return false; // handled; cancel keydown event 
   }
 
   function Speech_OnSpeakingEnded() {

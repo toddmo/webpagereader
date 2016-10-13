@@ -3,7 +3,7 @@
     "name": "Web Page Reader TTS Text To Speech",
     "short_name": "Web Page Reader",
     "description": "Reads web pages with text to speech",
-    "version": "0.5.2",
+    "version": "0.5.4",
     "browser_action": {
         "default_icon": "src/icons/WPFResourceDictionary_16x.png",
         "default_popup": "src/popup/control-panel.html"
