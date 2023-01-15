@@ -1,8 +1,7 @@
 class Storage {
-  constructor() {
-  }
+  constructor() {}
 
-  #type//object type
+  #type //object type
   get type() {
     return this.#type
   }
@@ -23,22 +22,28 @@ class Storage {
   }
 
   get value() {
-    return this.storage.getItem(this.key);
+    return this.storage.getItem(this.key)
   }
   set value(value) {
-    this.storage.setItem(this.key, value);
+    this.storage.setItem(this.key, value)
   }
 
-  get storage() {
-  }
+  get storage() {}
 
-  async load(storable) {
-    this.type = storable.type
-    for (var propertyName of storable.properties) {
-      this.property = propertyName
+  async load(storable, asJson) {
+    asJson = asJson == true
+    if (asJson) {
+      this.property = storable.id
       var value = await this.value
-      if (typeof value !== 'undefined' && value != null)
-        storable[propertyName] = value
+      Object.assign(storable, JSON.parse(value))
+    } else {
+      this.type = storable.type
+      for (var propertyName of storable.properties) {
+        this.property = propertyName
+        var value = await this.value
+        if (typeof value !== 'undefined' && value != null)
+          storable[propertyName] = value
+      }
     }
   }
 
@@ -49,8 +54,16 @@ class Storage {
       this.value = storable[property]
   }
 
-  save(storable) {
-    storable.properties.forEach(property => this.saveProperty(storable, property));
+  save(storable, asJson) {
+    asJson = asJson == true
+    if (asJson) {
+      this.type = storable.type
+      this.property = storable.id
+      this.value = JSON.stringify(storable.obj)
+    } else
+      storable.properties.forEach((property) =>
+        this.saveProperty(storable, property)
+      )
   }
 }
 
@@ -66,64 +79,52 @@ class WindowSessionStorage extends Storage {
   get storage() {
     return window.sessionStorage
   }
-
 }
 
-// lifetime: forever, scope: all logged in browsers
+// lifetime: forever, scope: all browsers
+// doesn't show up in content browser Storage Explorer (but it's there and available for reading); only in popup Storage Explorer ()
 class ChromeSyncStorage extends Storage {
-
   get storage() {
     return chrome.storage.sync
   }
 
   get value() {
-    return (async () => {
-      try {
-        var setting = await this.storage.get(this.key)
-        return setting[this.property];
-      } catch (e) {
-        return null; // fallback value;
-      }
-    })();
+    var storage = this.storage
+    var key = this.key
+    async function f() {
+      var setting = await storage.get(key)
+      return setting[key]
+    }
+    return f()
   }
   set value(value) {
-    var settingObject = {};
-    settingObject[this.key] = value;
-    this.storage.set(settingObject);
+    var settingObject = {}
+    settingObject[this.key] = value
+    this.storage.set(settingObject)
   }
-
 }
 
 // lifetime: forever, scope: all logged in browsers
 class ChromeLocalStorage extends Storage {
-
   get storage() {
     return chrome.storage.local
   }
 
   get value() {
+    var property = this.property
     return (async () => {
-      try {
-        var setting = await this.storage.get(this.key)
-        return setting[this.property];
-      } catch (e) {
-        return null; // fallback value;
-      }
-    })();
+      var setting = await this.storage.get(this.key)
+      return setting[property]
+    })()
   }
   set value(value) {
-    var settingObject = {};
-    settingObject[this.key] = value;
-    this.storage.set(settingObject);
+    var settingObject = {}
+    settingObject[this.key] = value
+    this.storage.set(settingObject)
   }
-
 }
 
 WebPageReader.WindowLocalStorage = WindowLocalStorage
 WebPageReader.WindowSessionStorage = WindowSessionStorage
 WebPageReader.ChromeSyncStorage = ChromeSyncStorage
 WebPageReader.ChromeLocalStorage = ChromeLocalStorage
-
-
-
-

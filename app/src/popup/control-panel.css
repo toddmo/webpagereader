@@ -1,13 +1,26 @@
 body {
   text-align: center;
-  background-image: -webkit-gradient(linear, left top, left bottom, from(ThreeDHighlight), to(black));
+  background-color: #333 !important;
+  color: #ddd !important;
+  margin-bottom: 1px;
+  /* background-image: -webkit-gradient(linear, left top, left bottom, from(ThreeDHighlight), to(black));
   background-image: -webkit-linear-gradient(top, ThreeDHighlight, black);
   background-image: -moz-linear-gradient(top, ThreeDHighlight, black);
-  background-image: linear-gradient(to bottom, ThreeDHighlight, black);
+  background-image: linear-gradient(to bottom, ThreeDHighlight, black); */
 }
 
 .panel-group {
   margin-bottom: 0px;
+}
+
+.panel {
+  background-color: unset;
+}
+
+.panel-heading {
+  background-color: #222 !important;
+  color: #ddd !important;
+  border-radius: 4px;
 }
 
 .btn-group {
@@ -16,9 +29,9 @@ body {
   /* inline-block will show ALL whitespace between elements, so shrink it!*/
 }
 
-#options {
+/* #options {
   background-image: linear-gradient(to bottom, ThreeDHighlight, black);
-}
+} */
 
 .btn-group .btn {
   display: inline-block;
@@ -30,10 +43,18 @@ body {
   /*box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 1px 5px 0 rgba(0, 0, 0, 0.12);*/
 
   /* glass buttons */
-  border: 1px solid rgba(0,0,0,0.5);
-  border-bottom: 2px solid rgba(0,0,0,0.5);
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
   border-radius: 3px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5), /* Exterior Shadow */ inset 0 1px rgba(255,255,255,0.3), /* Top light Line */ inset 0 10px rgba(255,255,255,0.2), /* Top Light Shadow */ inset 0 10px 20px rgba(255,255,255,0.25), /* Sides Light Shadow */ inset 0 -15px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5),
+    /* Exterior Shadow */
+    inset 0 1px rgba(255, 255, 255, 0.3),
+    /* Top light Line */
+    inset 0 10px rgba(255, 255, 255, 0.2),
+    /* Top Light Shadow */
+    inset 0 10px 20px rgba(255, 255, 255, 0.25),
+    /* Sides Light Shadow */
+    inset 0 -15px 30px rgba(0, 0, 0, 0.3);
 
 }
 
@@ -41,21 +62,44 @@ body {
   opacity: 0.5;
 }
 
-.play-control{
+.play-control {
   width: 95px !important;
 }
 
-#options {
+.options {
   padding: 5px;
 }
 
-#optionslink {
+.options a {
   text-decoration: none !important;
 }
 
 select {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5), /* Exterior Shadow */ inset 0 1px rgba(255,255,255,0.3), /* Top light Line */ inset 0 10px rgba(255,255,255,0.2), /* Top Light Shadow */ inset 0 10px 20px rgba(255,255,255,0.25), /* Sides Light Shadow */ inset 0 -15px 30px rgba(0,0,0,0.3) !important;
+  background-color: unset !important;
+  color: unset !important;
+  border-color: #2196F3 !important;
 }
+
+optgroup, option {
+  background-color: #333 !important;
+  color: #ddd !important;
+}
+
+#highlightPreview {
+  border-color: #2196F3 !important;
+}
+/* select {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5), 
+  /* Exterior Shadow 
+  inset 0 1px rgba(255,255,255,0.3), 
+  /* Top light Line 
+  inset 0 10px rgba(255,255,255,0.2), 
+  /* Top Light Shadow 
+  inset 0 10px 20px rgba(255,255,255,0.25), 
+  /* Sides Light Shadow 
+  inset 0 -15px 30px rgba(0,0,0,0.3) !important;
+} 
+*/
 
 /* checkbox into a switch */
 .switch {
@@ -93,18 +137,22 @@ select {
   transition: .4s;
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: #2196F3;
 }
 
-input:focus + .slider {
+input:focus+.slider {
   box-shadow: 0 0 1px #2196F3;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   -webkit-transform: translateX(13px);
   -ms-transform: translateX(13px);
   transform: translateX(13px);
+}
+
+output {
+  color: unset;
 }
 
 /* Rounded sliders */
@@ -116,34 +164,9 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
-/* input range circle*/
-input[type=range] {
-  -webkit-appearance: none;
+/* color picker */
+.colorpicker-component {
+  display: none;
 }
 
-input[type=range]::-webkit-slider-runnable-track {
-  width: 300px;
-  height: 5px;
-  background: #bbb;
-  border: none;
-  border-radius: 3px;
-}
-
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  border: none;
-  height: 16px;
-  width: 16px;
-  border-radius: 50%;
-  background: #2196F3;
-  margin-top: -6px;
-  
-}
-
-input[type=range]:focus {
-  outline: none;
-}
-
-input[type=range]:focus::-webkit-slider-runnable-track {
-  background: #ccc;
-}
+/* input range */

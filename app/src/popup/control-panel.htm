@@ -8,6 +8,7 @@
   <script type="text/javascript" src="../../lib/jquery-3.1.0.min.js"></script>
   <script type="text/javascript" src="../../lib/bootstrap.min.js"></script>
   <script type="text/javascript" src="../../lib/bootstrap-colorpicker.js"></script>
+  <script type="text/javascript" src="../../lib/linq.min.js"></script>
 
 </head>
 
@@ -38,23 +39,33 @@
     <div class="panel panel-default">
       <div class="panel-heading  text-left">
         <h4 class="panel-title">
-          <a id="optionslink" data-toggle="collapse" href="#options"><span class="glyphicon glyphicon-cog"
-              aria-hidden="true"></span>&nbsp;Options</a>
+          <a class="btn btn-sm btn-primary ml-0" data-toggle="collapse" href="#voiceOptions" role="button" aria-expanded="false" aria-controls="voiceOptions">
+            <span class="glyphicon glyphicon-comment" aria-hidden="true"></span>&nbsp;Voice Options
+          </a>          
         </h4>
       </div>
-      <div id="options" class="panel-collapse collapse text-left">
+      <div id="voiceOptions" class="panel-collapse collapse text-left options">
+        <!-- Voice -->
         <div class="form-group">
           <label for="lstVoices">Voice</label>
-          <select id="lstVoices" class="form-control"></select>
+          <select id="lstVoices" class="form-control border border-primary"></select>
         </div>
+        <!-- Volume -->
         <div class="form-group">
-          <label id="lblRate" for="rngRate"><output name="outRate" id="outRate">Rate</output></label>
-          <input id="rngRate" type="range" min="0.5" max="1.5" step="0.1" value="1" />
-        </div>
-        <div class="form-group">
-          <label id="lblVolume" for="rngVolume"><output name="outVolume" id="outVolume">Volume</output></label>
+          <label id="lblVolume" for="rngVolume"><output name="outVolume" id="outVolume">Volume (100%)</output></label>
           <input id="rngVolume" type="range" min="0" max="1" step="0.1" value="1" />
         </div>
+        <!-- Rate -->
+        <div class="form-group">
+          <label id="lblRate" for="rngRate"><output name="outRate" id="outRate">Rate (100%)</output></label>
+          <input id="rngRate" type="range" min="0.5" max="1.5" step="0.1" value="1" />
+        </div>
+        <!-- Pitch -->
+        <div class="form-group">
+          <label id="lblPitch" for="rngPitch"><output name="outPitch" id="outPitch">Pitch (100%)</output></label>
+          <input id="rngPitch" type="range" min="0.0" max="2.0" step="0.1" value="1.0" />
+        </div>
+        <!-- Enabled -->
         <div class="form-group">
           <label id="lblSpeechEnabled" for="chkSpeechEnabled">Speech Enabled</label>
           <label class="switch">
@@ -62,26 +73,81 @@
             <div class="slider round"></div>
           </label>
         </div>
+      </div>
+    </div>
+    <div class="panel panel-default">
+      <div class="panel-heading  text-left">
+        <h4 class="panel-title">
+          <a class="btn btn-sm btn-primary ml-0" data-toggle="collapse" href="#readerOptions" role="button" aria-expanded="false" aria-controls="readerOptions">
+            <span class="glyphicon glyphicon-text-background" aria-hidden="true"></span>&nbsp;Reader Options
+          </a>
+        </h4>
+      </div>
+      <div id="readerOptions" class="panel-collapse collapse text-left options">
+        <!-- Skip Code -->
         <div class="form-group">
-          <label id="lblSkipCode" for="chkSkipCode">Skip Over Code</label>
+          <label id="lblSkipCode" for="chkSkipCode">Don't Read Code Examples</label>
           <label class="switch">
             <input id="chkSkipCode" type="checkbox" checked />
             <div class="slider round"></div>
           </label>
         </div>
-        <div id="cp-component" class="form-group">
-          <label id="lblHighlightColor" for="cpHighlightColor">Highlight Color</label>
+        <!-- Scroll Behavior -->
+        <div class="form-group">
+          <label for="lstAutoScroll">Auto Scroll</label>
+          <select id="lstAutoScroll" class="form-control border border-primary">
+            <option selected value="ScrollByPages">Page At A Time</option>
+            <option value="ScrollToMiddle">Scroll To Middle</option>
+            <option value="None">Disabled</option>
+          </select>
+        </div>
+        <!-- Scroll Middle Adjust -->
+        <div class="form-group" title="50% is middle of screen, 0% is top and 100% is bottom">
+          <label id="lblScrollMiddleAdjust" for="rngScrollMiddleAdjust">
+            <output name="outScrollMiddleAdjust" id="outScrollMiddleAdjust">Scroll "Middle" Adjust (50%)</output>
+          </label>
+          <input id="rngScrollMiddleAdjust" type="range" min="0.0" max="1.0" step="0.05" value="0.5" />
+        </div>
+        <!-- Highlight Preview -->
+        <div class="form-group">
+          <label id="lblSkipCode" for="highlightPreview">Highlight</label>
+          <div>
+            How the <span id="highlightPreview">sentence being read</span> will appear
+          </div>
+        </div>
+        <!-- Highlight BackColor -->
+        <div id="cp-HighlightBackColor" class="form-group">
+          <label id="lblHighlightBackColor" for="cpHighlightBackColor">BackColor</label>
           <div id="cp3" class="input-group colorpicker-component">
-            <input id="cpHighlightColor" type="text" value="#00AABB" class="form-control" />
+            <input id="cpHighlightBackColor" type="text" value="#00AABB" class="form-control" />
+            <span class="input-group-addon"><i></i></span>
+          </div>
+        </div>
+        <!-- Highlight ForeColor -->
+        <div id="cp-HighlightForeColor" class="form-group">
+          <label id="lblHighlightForeColor" for="cpHighlightForeColor">ForeColor</label>
+          <div id="cp3" class="input-group colorpicker-component">
+            <input id="cpHighlightForeColor" type="text" value="#00AABB" class="form-control" />
             <span class="input-group-addon"><i></i></span>
           </div>
         </div>
       </div>
     </div>
+    <div class="panel panel-default">
+      <div class="panel-heading  text-left">
+        <h4 class="panel-title">
+          <a class="btn btn-sm btn-primary ml-0" data-toggle="collapse" href="#vocabulary" role="button" aria-expanded="false" aria-controls="vocabulary">
+            <span class="glyphicon glyphicon-book" aria-hidden="true"></span>&nbsp;Vocabulary
+          </a>          
+        </h4>
+      </div>
+      <div id="vocabulary" class="panel-collapse collapse text-left options">
+      </div>
+    </div>
   </div>
   <script src="../js/utils.js"></script>
   <script src="../app.js"></script>
-  <script src="../js/storable.js"></script>  
+  <script src="../js/storable.js"></script>
   <script src="../js/storage.js"></script>
   <script src="../js/speech.js"></script>
   <script src="../js/language.js"></script>

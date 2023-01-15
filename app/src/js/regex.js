@@ -1,6 +1,6 @@
 class Regex {
   /* public properties */
-  #REGEX_SENTENCE_TERMINATOR = /[.?!]/g;
+  #REGEX_SENTENCE_TERMINATOR = /[.?!]\s+/g;
   get SentenceTerminator() {
     return this.#REGEX_SENTENCE_TERMINATOR
   }

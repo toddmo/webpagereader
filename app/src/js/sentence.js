@@ -4,98 +4,138 @@
     It can navigate itself around the page
 */
 class Sentence extends Range {
-
   constructor() {
-    super();
-    this.dom = new WebPageReader.Dom();
+    super()
+    this.dom = new WebPageReader.Dom()
     this.dom.SkipCode = this.SkipCode
-    this.regex = new WebPageReader.Regex();
-    this.highlighted = false;
-    this.backupHtml = '';
-    this.dom.LoadAllTextNodes();
+    this.regex = new WebPageReader.Regex()
+    this.highlighted = false
+    this.backupHtml = ''
+    this.dom.LoadAllTextNodes()
     this.AlignToRange(this.dom.SelectedRange || this.dom.FirstRange)
-    this.collapse(true); // collapse to start
-    this.AlignEndPoints();
-    this.Expand();
+    this.collapse(true) // collapse to start
+    this.AlignEndPoints()
+    this.Expand()
+  }
+
+  //#region Enums
+  get AutoScrolls() {
+    return {
+      ScrollByPages: 'ScrollByPages',
+      ScrollToMiddle: 'ScrollToMiddle',
+      None: 'None',
+    }
   }
 
   /* public properties */
-  #skipCode = true;
+  #skipCode = true
   get SkipCode() {
-    return this.#skipCode;
+    return this.#skipCode
   }
   set SkipCode(value) {
-    this.#skipCode = value.toString() == "true";
+    this.#skipCode = value.toString() == 'true'
     this.dom.SkipCode = this.SkipCode
   }
 
+  #autoScroll = this.AutoScrolls.ScrollByPages
+  get AutoScroll() {
+    return this.#autoScroll
+  }
+  set AutoScroll(value) {
+    this.#autoScroll = value
+  }
+
+  #scrollMiddleAdjust = 0.5 // [0.0, 1.0]
+  get ScrollMiddleAdjust() {
+    return this.#scrollMiddleAdjust
+  }
+  set ScrollMiddleAdjust(value) {
+    this.#scrollMiddleAdjust = value
+  }
+
+  #visualizing = false // set this to true to troubleshoot selections
+  get Visualizing() {
+    return this.#visualizing
+  }
+  set Visualizing(value) {
+    this.#visualizing = value.toString() == 'true'
+  }
+
   get CanPrevious() {
-    return !this.StartCharacter.Bof;
+    return !this.StartCharacter.Bof
   }
 
   get CanNext() {
-    return !this.EndCharacter.Eof;
+    return !this.EndCharacter.Eof
   }
 
   set Highlighted(value) {
-    if (value == this.highlighted) return;
-    if (value)
-      this.Highlight();
-    else
-      this.Unhighlight();
-    this.highlighted = value;
+    if (value == this.highlighted) return
+    if (value) this.Highlight()
+    else this.Unhighlight()
+    this.highlighted = value
   }
 
   /* public methods */
   Expand() {
+    this.Align()
+    this.Visualize(`expand start`)
     // send start backwards until you hit a sentence terminator
-    this.StartCharacter.Search(this.regex.SentenceTerminator, false); 
+    this.StartCharacter.Search(this.regex.SentenceTerminator, false)
+    this.Align()
+    this.Visualize(`start character search backwards to sentence terminator`)
     // then go forwards until you get non-whitespace
-    this.StartCharacter.Search(this.regex.NonWhitespace, true);
+    this.StartCharacter.Search(this.regex.NonWhitespace, true)
+    this.Align()
+    this.Visualize(`start character search forwards to non whitespace`)
     // send end forwards until you hit a sentence terminator
-    this.EndCharacter.Search(this.regex.SentenceTerminator, true);
-    this.Align();
+    this.EndCharacter.Search(this.regex.SentenceTerminator, true)
+    this.Align()
+    this.Visualize(`end character search forwards to sentence terminator`)
+    this.Align()
+    this.Visualize(`align`)
   }
 
   Next() {
-    this.EndCharacter.Next();
-    this.Align();
-    this.collapse(false); // collapse to end
-    this.AlignEndPoints();
-    this.Expand();
+    this.EndCharacter.Next()
+    this.Align()
+    this.collapse(false) // collapse to end
+    this.AlignEndPoints()
+    this.Expand()
   }
 
   Previous() {
-    this.StartCharacter.Search(this.regex.SentenceTerminator, false);
-    this.StartCharacter.Previous();
-    this.Align();
-    this.collapse(true); // collapse to start
-    this.AlignEndPoints();
-    this.Expand();
+    this.StartCharacter.Search(this.regex.SentenceTerminator, false)
+    this.StartCharacter.Previous()
+    this.Align()
+    this.collapse(true) // collapse to start
+    this.AlignEndPoints()
+    this.Expand()
   }
 
+  // this aligns the html range with our object model
   Align() {
-    this.setStart(this.StartCharacter.TextNode, this.StartCharacter.Offset);
-    this.setEnd(this.EndCharacter.TextNode, this.EndCharacter.Offset);
+    this.setStart(this.StartCharacter.TextNode, this.StartCharacter.Offset)
+    this.setEnd(this.EndCharacter.TextNode, this.EndCharacter.Offset)
   }
 
   AlignToRange(range) {
-    this.setStart(range.startContainer, range.startOffset);
-    this.setEnd(range.endContainer, range.endOffset);
+    this.setStart(range.startContainer, range.startOffset)
+    this.setEnd(range.endContainer, range.endOffset)
   }
 
   AlignEndPoints() {
-    this.StartCharacter = new WebPageReader.Character(this.dom, this);
-    this.EndCharacter = new WebPageReader.Character(this.dom, this);
+    this.StartCharacter = new WebPageReader.Character(this.dom, this)
+    this.EndCharacter = new WebPageReader.Character(this.dom, this)
   }
 
   Highlight() {
     /*
     var savedSelection = this.dom.GetSelectedRange() ? this.dom.SaveSelection() : null;
     */
-    var selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(this);
+    var selection = window.getSelection()
+    selection.removeAllRanges()
+    selection.addRange(this)
 
     /*
     document.designMode = 'on';
@@ -103,12 +143,21 @@ class Sentence extends Range {
     document.execCommand("foreColor", false, "White");
     selection.removeAllRanges();
     */
-    this.ScrollToMiddle();
-    /*
-    if (!this.dom.IsElementInViewport(this.startContainer.parentElement))
-      this.startContainer.parentElement.scrollIntoView(true);
-    */
-    this.highlighted = true;
+
+    switch (this.AutoScroll) {
+      case this.AutoScrolls.ScrollToMiddle:
+        this.ScrollToMiddle()
+        break
+      case this.AutoScrolls.ScrollByPages:
+        if (!this.dom.IsElementInViewport(this.startContainer.parentElement))
+          // this.startContainer.parentElement.scrollIntoView(true)
+          this.ScrollToMiddle(0.7)
+        break
+      case this.AutoScrolls.None:
+        break
+      default:
+    }
+    this.highlighted = true
 
     /*
         if (selection) this.dom.RestoreSelection(selection);
@@ -160,7 +209,7 @@ class Sentence extends Range {
         var selection = window.getSelection();
         selection.removeAllRanges();
         */
-    this.highlighted = false;
+    this.highlighted = false
 
     /*
     var selection = this.dom.GetSelectedRange() ? this.dom.SaveSelection() : null;
@@ -176,60 +225,83 @@ class Sentence extends Range {
     */
   }
 
-  ScrollToMiddle() {
-    var el = $(this.startContainer.parentElement);
-    var elOffset = el.offset().top;
-    var elHeight = el.height();
-    var windowHeight = window.innerHeight;
-    var documentHeight = document.documentElement.offsetHeight;
-    var offset;
+  ScrollToMiddle(scrollMiddleAdjust) {
+    scrollMiddleAdjust = scrollMiddleAdjust || this.ScrollMiddleAdjust
+    var el = $(this.startContainer.parentElement)
+    var elOffset = el.offset().top
+    var elHeight = el.height()
+    var windowHeight = window.innerHeight
+    var documentHeight = document.documentElement.offsetHeight
+    var offset
 
     if (elHeight < windowHeight) {
-      offset = elOffset - ((windowHeight / 4) - (elHeight / 2));
+      var windowAlignTo = windowHeight * scrollMiddleAdjust // 0.5 by default is the vertical middle of the screen
+      offset = elOffset - (windowAlignTo - elHeight / 2)
+    } else {
+      offset = elOffset
     }
-    else {
-      offset = elOffset;
-    }
-    window.scrollTo(0, offset);
+    window.scrollTo(0, offset)
     //$.smoothScroll({ speed: 700 }, offset);
   }
 
   Visualize(label) {
-    const BeginRangeMarker = '\u25BA';
-    const EndRangeMarker = '\u25C4';
-    const TextNodeBoundary = '\u2551';
-    const NewLineIndicator = '\u21B5';
-    var allTextNodes = this.dom.AllTextNodes;
-    var msg = '';
-    var intersects = false;
-    for (var textNodeIndex = 0; textNodeIndex < allTextNodes.length; textNodeIndex++) {
-      var textNode = allTextNodes[textNodeIndex];
-      var value = textNode.nodeValue.replace(/[\n]/g, NewLineIndicator);
+    if (!this.Visualizing) return
+
+    const BeginRangeMarker = '\u25BA' // ►
+    const EndRangeMarker = '\u25C4' // ◄
+    const TextNodeBoundary = '\u2551' // ║
+    const NewLineIndicator = '\u21B5' // ↵
+    var allTextNodes = this.dom.AllTextNodes
+    var msg = ''
+    var intersects = false
+    for (
+      var textNodeIndex = 0;
+      textNodeIndex < allTextNodes.length;
+      textNodeIndex++
+    ) {
+      var textNode = allTextNodes[textNodeIndex]
+      var value = textNode.nodeValue.replace(/[\n]/g, NewLineIndicator)
       if (this.intersectsNode(textNode)) {
         if (!intersects) {
-          if (!allTextNodes[textNodeIndex + 1] || !this.intersectsNode(allTextNodes[textNodeIndex + 1]))
+          if (
+            !allTextNodes[textNodeIndex + 1] ||
+            !this.intersectsNode(allTextNodes[textNodeIndex + 1])
+          )
             // I begin and finish inside this first node
-            msg += `${TextNodeBoundary}${value.substring(0, this.startOffset)}${BeginRangeMarker}${value.substring(this.startOffset, this.endOffset)}${EndRangeMarker}${value.substring(this.endOffset)}`;
+            msg += `${TextNodeBoundary}${value.substring(
+              0,
+              this.startOffset
+            )}${BeginRangeMarker}${value.substring(
+              this.startOffset,
+              this.endOffset
+            )}${EndRangeMarker}${value.substring(this.endOffset)}`
+          // I only begin inside this first node
           else
-            // I only begin inside this first node
-            msg += `${TextNodeBoundary}${value.substring(0, this.startOffset)}${BeginRangeMarker}${value.substring(this.startOffset)}`;
-        } else if (!allTextNodes[textNodeIndex + 1] || !this.intersectsNode(allTextNodes[textNodeIndex + 1]))
+            msg += `${TextNodeBoundary}${value.substring(
+              0,
+              this.startOffset
+            )}${BeginRangeMarker}${value.substring(this.startOffset)}`
+        } else if (
+          !allTextNodes[textNodeIndex + 1] ||
+          !this.intersectsNode(allTextNodes[textNodeIndex + 1])
+        )
           // I end in this node
-          msg += `${TextNodeBoundary}${value.substring(0, this.endOffset)}${EndRangeMarker}${value.substring(this.endOffset)}`;
-        else
-          // I completely contain this node
-          msg += `${TextNodeBoundary}${value}`;
+          msg += `${TextNodeBoundary}${value.substring(
+            0,
+            this.endOffset
+          )}${EndRangeMarker}${value.substring(this.endOffset)}`
+        // I completely contain this node
+        else msg += `${TextNodeBoundary}${value}`
 
-        intersects = true;
+        intersects = true
       } else if (intersects) {
-        break;
+        break
       }
     }
-    // txtVisualization.value = `${msg}║`; 
-    msg = `${label} = ${msg}║`;
-    console.log(msg);
+    // txtVisualization.value = `${msg}║`;
+    msg = `${label} = ${msg}║`
+    console.log(msg)
   }
 }
 
 WebPageReader.Sentence = Sentence
-

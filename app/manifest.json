@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Web Page Reader TTS Text To Speech",
   "short_name": "Web Page Reader",
-  "description": "No selection required :) *And* Highlights one sentence at a time when reading the page. Controllable by keyboard / toolbar. No ads!",
-  "version": "0.6.0",
+  "description": "100% Free. No registration. No ads. No data sharing. Reads with no selection required. Highlights one sentence at a time.",
+  "version": "0.7.2",
   "action": {
     "default_icon": "src/icons/WPFResourceDictionary_16x.png",
     "default_popup": "src/popup/control-panel.htm"
@@ -21,9 +21,6 @@
   ],
   "host_permissions": [
     "https://ajax.googleapis.com/"
-  ],
-  "optional_host_permissions": [
-    "*://*/*"
   ],
   "background": {
     "service_worker": "src/background/background.js"

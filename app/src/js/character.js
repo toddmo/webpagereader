@@ -4,11 +4,11 @@
 */
 class Character {
   constructor(dom, range) {
-    this.dom = dom;
-    this.TextNode = range.startContainer;
-    this.Offset = range.startOffset;
-    this.Bof = false;
-    this.Eof = false;
+    this.dom = dom
+    this.TextNode = range.startContainer
+    this.Offset = range.startOffset
+    this.Bof = false
+    this.Eof = false
   }
 
   #textNode
@@ -17,70 +17,78 @@ class Character {
   }
   set TextNode(value) {
     this.#textNode = value
-    this.BlockNode = this.TextNode.parentNode.closest(`*:not([style*='inline'])`)
+  }
+
+  get BlockNode() {
+    return this.dom.BlockNode(this.TextNode)
   }
 
   Search(regex, forward) {
     var initialBlockNode = this.BlockNode
-    var found = false;
-    var buffer = '';
+    var needToStop = false
+    var searchString = ''
     do {
       if (forward) {
-        buffer += this.toString();
-        found = regex.test(buffer) || this.BlockNode != initialBlockNode;
-        regex.lastIndex = 0;
-        if (!this.Next()) return false;
+        searchString += this.toString()
+        needToStop = regex.test(searchString)
+        regex.lastIndex = 0
+        if (this.BlockNode != initialBlockNode) {
+          needToStop = true
+          this.Previous()
+        } else if (!needToStop) {
+          if (!this.Next()) return false
+        }
       } else {
-        if (!this.Previous()) return false;
-        buffer = this.toString() + buffer;
-        found = regex.test(buffer) || this.BlockNode != initialBlockNode
-        regex.lastIndex = 0;
+        if (!this.Previous()) return false
+        searchString = this.toString() + searchString
+        needToStop = regex.test(searchString)
+        regex.lastIndex = 0
+        if (this.BlockNode != initialBlockNode) {
+          needToStop = true
+        }
+        if (needToStop) this.Next()
       }
-    } while (!found);
-    // roll it one character (get off the match)    
-    if (forward) this.Previous();
-    else this.Next();
-    return true; // found it
+    } while (!needToStop)
+    return true // found it
   }
 
   Previous() {
-    this.Bof = false;
-    this.Offset--;
+    this.Bof = false
+    this.Offset--
     if (this.Offset < 0) {
       if (!this.dom.PreviousTextNode(this.TextNode)) {
-        this.Bof = true;
-        this.Offset = 0;
-        return false;
+        this.Bof = true
+        this.Offset = 0
+        return false
       }
-      this.TextNode = this.dom.PreviousTextNode(this.TextNode);
-      this.Offset = this.TextNode.nodeValue.length - 1;
+      this.TextNode = this.dom.PreviousTextNode(this.TextNode)
+      this.Offset = this.TextNode.nodeValue.length // - 1
     }
-    return true;
+    return true
   }
 
   Next() {
-    this.Eof = false;
-    this.Offset++;
+    this.Eof = false
+    this.Offset++
     // if I crossed into the next text node
     if (this.Offset > this.TextNode.nodeValue.length - 1) {
       // go to the next text node
       var nextTextNode = this.dom.NextTextNode(this.TextNode)
       // if there's not a next text node
       if (!nextTextNode) {
-        this.Eof = true;
-        this.Offset = this.TextNode.nodeValue.length - 1;
-        return false;
+        this.Eof = true
+        this.Offset = this.TextNode.nodeValue.length - 1
+        return false
       }
       this.TextNode = nextTextNode
-      this.Offset = 0;
+      this.Offset = 0
     }
-    return true;
+    return true
   }
 
   toString() {
-    return this.TextNode.nodeValue.substring(this.Offset, this.Offset + 1);
+    return this.TextNode.nodeValue.substring(this.Offset, this.Offset + 1)
   }
 }
 
 WebPageReader.Character = Character
-
