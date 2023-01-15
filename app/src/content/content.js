@@ -1,20 +1,10 @@
-WebPageReader.Content = function () {
-
-  /*  This will be called for each window including iframes
-
-  */
-
-  /* constructor */
-  constructor();
-
-  /* private methods */
-  function constructor() {
-
+class Content {
+  constructor() {
     // don't run in frames
     if (window != window.top)
       return;
 
-    var reader = new WebPageReader.Reader();
+    new WebPageReader.Reader()
 
 
     // wiring up events
@@ -89,4 +79,8 @@ WebPageReader.Content = function () {
   }
 }
 
-var content = new WebPageReader.Content();
+/*  This will be called for each window including iframes
+
+*/
+WebPageReader.Content = Content
+new Content()

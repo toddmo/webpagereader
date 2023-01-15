@@ -1,33 +1,64 @@
-WebPageReader.UI.ControlPanel = function () {
-
-  /* private properties */
-  var self = this;
-  var storage = new WebPageReader.Storage(this);
-  var speech = new WebPageReader.Speech(storage);
-  var language = new WebPageReader.Language();
+class ControlPanel extends Storable {
 
   /* constructor */
-  function constructor() {
+  constructor() {
+    super()
+    // load the color picker component
+    $(function () {
+      $('#cp-component').colorpicker(
+        {
+          color: '#ffaa00',
+          container: true,
+          inline: true
+        }
+      );
+    });
+
     // voice changes from Speech
-    speech.OnVoicesChanged = () => {
-      self.Voices = speech.Voices
+    this.Speech.OnVoicesChanged = () => {
+      this.Voices = this.Speech.Voices
     };
-    load();
+
+    // load settings for options
+    var localStorage = new WindowLocalStorage()
+    this.type = 'Reader'
+    this.load(localStorage)
+    this.type = 'Speech'
+    this.load(localStorage)
+
+    // adjust ui
+    this.Reading = this.Reading
+    this.Paused = this.Paused
+    this.CanPrevious = this.CanPrevious
+    this.CanNext = this.CanNext
+    this.Rate = this.Rate
+    this.Volume = this.Volume
+    this.SpeechEnabled = this.SpeechEnabled
+    this.SkipCode = this.SkipCode
+    this.HighlightBackColor = this.HighlightBackColor
+    this.HighlightForeColor = this.HighlightForeColor
 
     // commands going to the reader
-    start.onclick = () => { self.DoCommand('start'); }
-    btnStop.onclick = () => { self.DoCommand('stop'); }
-    pause.onclick = () => { self.DoCommand('pause'); }
-    resume.onclick = () => { self.DoCommand('resume'); }
-    next.onclick = () => { self.DoCommand('next'); }
-    previous.onclick = () => { self.DoCommand('previous'); }
+    start.onclick = () => { this.DoCommand('start'); }
+    btnStop.onclick = () => { this.DoCommand('stop'); }
+    pause.onclick = () => { this.DoCommand('pause'); }
+    resume.onclick = () => { this.DoCommand('resume'); }
+    next.onclick = () => { this.DoCommand('next'); }
+    previous.onclick = () => { this.DoCommand('previous'); }
 
     // UI events
-    lstVoices.onchange = () => {
-      self.Voice = lstVoices.options[lstVoices.selectedIndex].attributes['data-name'].nodeValue;
+    chkSpeechEnabled.onchange = () => {
+      this.SpeechEnabled = chkSpeechEnabled.checked
     }
-    rngRate.onchange = () => { self.Rate = rngRate.value };
-    rngVolume.onchange = () => { self.Volume = rngVolume.value };
+    chkSkipCode.onchange = () => {
+      this.SkipCode = chkSkipCode.checked
+    }
+    lstVoices.onchange = () => {
+      console.log(`lstVoices.onchange ${lstVoices.selectedIndex}`)
+      this.Voice = lstVoices.options[lstVoices.selectedIndex].attributes['data-name'].nodeValue;
+    }
+    rngRate.onchange = () => { this.Rate = rngRate.value };
+    rngVolume.onchange = () => { this.Volume = rngVolume.value };
 
     // UI sync
     rngRate.oninput = () => {
@@ -40,179 +71,209 @@ WebPageReader.UI.ControlPanel = function () {
     };
 
     // storage changes from reader state
-    chrome.storage.onChanged.addListener(self.Storage_OnChange);
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      this.Storage_OnChange(this, changes, namespace)
+    });
 
     // listen for reader to become active
-    chrome.runtime.onMessage.addListener(self.Runtime_OnMessage);
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      this.Runtime_OnMessage(this, request)
+    });
+  }
+
+  /* private properties */
+  #speech = new WebPageReader.Speech();
+  get Speech() {
+    return this.#speech
+  }
+
+  #language = new WebPageReader.Language();
+  get Language() {
+    return this.#language
   }
 
   /* public properties */
-  var reading = false;
-  Object.defineProperty(this, "Reading", {
-    get: function () {
-      return reading;
-    },
-    set: function (value) {
-      reading = value.toString() == "true";
-      display(start, !reading);
-      btnStop.disabled = !reading;
-      display(pause, reading && !paused);
-    },
-    enumerable: true
-  });
+  #reading = false;
+  get Reading() {
+    return this.#reading;
+  }
+  set Reading(value) {
+    this.#reading = value.toString() == "true";
+    this.#display(start, !this.#reading);
+    btnStop.disabled = !this.#reading;
+    this.#display(pause, this.#reading && !this.Paused);
+  }
 
-  var paused = false;
-  Object.defineProperty(this, "Paused", {
-    get: function () {
-      return paused;
-    },
-    set: function (value) {
-      paused = value.toString() == "true";
-      display(start, !reading);
-      btnStop.disabled = !reading;
-      display(pause, reading && !paused);
-      display(resume, paused);
-    },
-    enumerable: true
-  });
+  #paused = false;
+  get Paused() {
+    return this.#paused;
+  }
+  set Paused(value) {
+    this.#paused = value.toString() == "true";
+    this.#display(start, !this.#reading);
+    btnStop.disabled = !this.#reading;
+    this.#display(pause, this.#reading && !this.#paused);
+    this.#display(resume, this.#paused);
+  }
 
-  var canNext = false;
-  Object.defineProperty(this, "CanNext", {
-    get: function () {
-      return canNext;
-    },
-    set: function (value) {
-      canNext = value.toString() == "true";
-      next.disabled = !canNext;
-    },
-    enumerable: true
-  });
+  #canPrevious = false;
+  get CanPrevious() {
+    return this.#canPrevious;
+  }
+  set CanPrevious(value) {
+    this.#canPrevious = value.toString() == "true";
+    previous.disabled = !this.#canPrevious;
+  }
 
-  var canPrevious = false;
-  Object.defineProperty(this, "CanPrevious", {
-    get: function () {
-      return canPrevious;
-    },
-    set: function (value) {
-      canPrevious = value.toString() == "true";
-      previous.disabled = !canPrevious;
-    },
-    enumerable: true
-  });
+  #canNext = false;
+  get CanNext() {
+    return this.#canNext;
+  }
+  set CanNext(value) {
+    this.#canNext = value.toString() == "true";
+    next.disabled = !this.#canNext;
+  }
 
-  var voices = null;
-  Object.defineProperty(this, "Voices", {
-    get: function () {
-      return voices;
-    },
-    set: function (value) {
-      voices = value;
-      loadVoices();
+  #voices = [];
+  get Voices() {
+    return this.#voices;
+  }
+  set Voices(value) {
+    if (Array.isArray(value)) {
+      this.#voices = value;
+      console.log('control panel voices received' + this.Voices.length)
+      this.#loadVoices();
     }
-  });
+    else
+      console.log(`control panel voices bad value ${value} received`)
+  }
 
-  var voice = 'native';
-  Object.defineProperty(this, "Voice", {
-    get: function () {
-      return voice;
-    },
-    set: function (value) {
-      voice = value;
-      saveSpeechSettings('Voice');
-    },
-    enumerable: true
-  });
+  #voice = 'native';
+  get Voice() {
+    return this.#voice;
+  }
+  set Voice(value) {
+    console.log(`setting voice to ${value}`)
+    console.trace()
+    this.#voice = value;
+    this.#saveSpeechSettings('Voice');
+  }
 
-  var rate = 1.0;
-  Object.defineProperty(this, "Rate", {
-    get: function () {
-      return rate;
-    },
-    set: function (value) {
-      rate = Number(value);
-      rngRate.value = rate;
-      rngRate.title = rate;
-      outRate.value = `Rate (${(rate * 100).toFixed(0)}%)`;
-      saveSpeechSettings('Rate');
-    },
-    enumerable: true
-  });
+  #rate = 1.0;
+  get Rate() {
+    return this.#rate;
+  }
+  set Rate(value) {
+    this.#rate = Number(value);
+    rngRate.value = this.#rate
+    rngRate.title = this.#rate
+    outRate.value = `Rate (${(this.#rate * 100).toFixed(0)}%)`;
+    this.#saveSpeechSettings('Rate');
+  }
 
-  var volume = 1.0;
-  Object.defineProperty(this, "Volume", {
-    get: function () {
-      return volume;
-    },
-    set: function (value) {
-      volume = Number(value);
-      rngVolume.value = volume;
-      rngVolume.title = volume;
-      outVolume.value = `Volume (${(volume * 100).toFixed(0)}%)`;
-      saveSpeechSettings('Volume');
-    },
-    enumerable: true
-  });
+  #volume = 1.0;
+  get Volume() {
+    return this.#volume;
+  }
+  set Volume(value) {
+    this.#volume = Number(value);
+    rngVolume.value = this.#volume
+    rngVolume.title = this.#volume
+    outVolume.value = `Volume (${(this.#volume * 100).toFixed(0)}%)`;
+    this.#saveSpeechSettings('Volume');
+  }
 
-  var speechEnabled = true;
-  Object.defineProperty(this, "SpeechEnabled", {
-    get: function () {
-      return speechEnabled;
-    },
-    set: function (value) {
-      speechEnabled = value.toString() == "true";
-      chkSpeechEnabled.checked = speechEnabled;
-      saveSpeechSettings('SpeechEnabled');
-    },
-    enumerable: true
-  });
+  #Enabled = true;
+  get Enabled() {
+    return this.#Enabled;
+  }
+  set Enabled(value) {
+    this.#Enabled = value.toString() == "true";
+    chkSpeechEnabled.checked = this.#Enabled;
+    this.#saveSpeechSettings('Enabled');
+  }
+
+  #skipCode = true;
+  get SkipCode() {
+    return this.#skipCode;
+  }
+  set SkipCode(value) {
+    this.#skipCode = value.toString() == "true";
+    chkSkipCode.checked = this.#skipCode;
+    this.#saveReaderSettings('SkipCode');
+  }
+
+  #highlightBackColor = `rgba(255,255,0,0.4)`
+  get HighlightBackColor() {
+    return this.#highlightBackColor
+  }
+  set HighlightBackColor(value) {
+    this.#highlightBackColor = value
+    this.#saveReaderSettings('HighlightBackColor');    
+  }
+
+  #highlightForeColor = `#333`
+  get HighlightForeColor() {
+    return this.#highlightForeColor
+  }
+  set HighlightForeColor(value) {
+    this.#highlightForeColor = value
+    this.#saveReaderSettings('HighlightForeColor');    
+  }
 
   /* public methods */
-  this.getType = function () { return "WebPageReader.UI.ControlPanel" }
-
-  this.DoCommand = function (name) {
+  DoCommand(name) {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       chrome.tabs.sendMessage(tabs[0].id, { command: name }, function (response) {
-        console.log(response.outcome);
+        console.log(response?.outcome);
       });
     });
   }
 
   /* private methods */
-  function display(el, condition) {
+  #display(el, condition) {
     el.style.display = condition ? 'inline' : 'none';
   }
 
-  function load() {
-    storage.Load(storage.Types.Sync, 'WebPageReader.Reader');
-    storage.Load(storage.Types.Sync, 'WebPageReader.Speech');
-  }
 
-  function loadVoices() {
-    for (i = 0; i < self.Voices.length; i++) {
-      if (!lang || language.LanguageName(voices[i].lang) != lang) {
-        var lang = language.LanguageName(voices[i].lang) || 'Local';
+  #loadVoices() {
+    for (var i = 0; i < this.Voices.length; i++) {
+      if (!lang || this.#language.LanguageName(this.Voices[i].lang) != lang) {
+        var lang = this.#language.LanguageName(this.Voices[i].lang) || 'Local';
         var optGroup = document.createElement('optgroup');
         optGroup.setAttribute('label', lang);
         lstVoices.appendChild(optGroup);
       }
       var option = document.createElement('option');
-      option.textContent = voices[i].name;// + ' (' + voices[i].lang + ')';
+      option.textContent = this.Voices[i].name;// + ' (' + this.Voices[i].lang + ')';
 
-      if (voices[i].name == self.Voice)
+      if (this.Voices[i].name == this.Voice)
         option.setAttribute('selected', true);
-      option.setAttribute('data-lang', voices[i].lang);
-      option.setAttribute('data-name', voices[i].name);
+      option.setAttribute('data-lang', this.Voices[i].lang);
+      option.setAttribute('data-name', this.Voices[i].name);
       optGroup.appendChild(option);
     }
   }
 
-  function saveSpeechSettings(setting) {
-    storage.Save(storage.Types.Sync, speech, setting);
+  #saveSpeechSettings(property) {
+    this.type = 'Speech'
+    this.saveProperty(new ChromeSyncStorage(), property)
+    this.saveProperty(new WindowLocalStorage(), property)
+    this.saveProperty(new WindowSessionStorage(), property)
+    this.saveProperty(new ChromeLocalStorage(), property)
+  }
+
+  #saveReaderSettings(property) {
+    this.type = 'Reader'
+    this.saveProperty(new ChromeSyncStorage(), property)
+    this.saveProperty(new WindowLocalStorage(), property)
+    this.saveProperty(new WindowSessionStorage(), property)
+    this.saveProperty(new ChromeLocalStorage(), property)
   }
 
   /* event handlers */
-  this.Storage_OnChange = function (changes, namespace) {
-    for (key in changes) {
+  Storage_OnChange(self, changes, namespace) {
+    for (var key in changes) {
       var storageChange = changes[key];
       console.log('Storage key "%s" in namespace "%s" changed. ' +
         'Old value was "%s", new value is "%s".',
@@ -238,7 +299,7 @@ WebPageReader.UI.ControlPanel = function () {
     }
   }
 
-  this.Runtime_OnMessage = function (request, sender, sendResponse) {
+  Runtime_OnMessage(self, request) {
     switch (request.name) {
       case 'OnActivated':
         var reader = request.source;
@@ -250,7 +311,6 @@ WebPageReader.UI.ControlPanel = function () {
     };
   }
 
-  constructor(); // finally call the constructor
 }
 
-var controlPanel = new WebPageReader.UI.ControlPanel();
+WebPageReader.UI.ControlPanel = new ControlPanel();

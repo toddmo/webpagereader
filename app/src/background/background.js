@@ -13,14 +13,29 @@ function doCommand(name) {
   });
 }
 
-chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
-    if(request == "isSelected") {
-        chrome.tabs.getSelected(null, function(tab){
-            if(tab.id == sender.tab.id) {
-                sendResponse(true); //in focus (selected)
-            } else {
-                sendResponse(false);    //not in focus
-            }
-        });
-    }
+// handle messages that come from the application
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  switch (request) {
+    // this is from the reader, checking if it's the active reader
+    case 'isSelected':
+      chrome.tabs.query({ active: true, lastFocusedWindow: true }).then(
+        (tabs) => {
+          // `tab` will either be a `tabs.Tab` instance or `undefined`.
+          if (tabs.length && tabs[0].id == sender.tab.id) {
+            sendResponse(true); //in focus (selected)
+          } else {
+            sendResponse(false);    //not in focus
+          }
+        }
+      )
+      break;
+  }
+  return true
+});
+
+chrome.runtime.onConnect.addListener(port => {
+  console.log('connected ', port);
+  if (port.name === 'hi') {
+    port.onMessage.addListener(this.processMessage);
+  }
 });

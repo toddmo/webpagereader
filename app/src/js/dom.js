@@ -1,52 +1,57 @@
-WebPageReader.Dom = function () {
+class Dom {
   /*  basic re-usable dom functions
   */
 
-  /* public properties */
-  var allTextNodes = [];
-  Object.defineProperty(this, "AllTextNodes", {
-    get: function () {
-      return allTextNodes
-    },
-    set: function (value) {
-      allTextNodes = value;
-      /*
-      for(var i = 0; i < allTextNodes.length; i++){
-        console.log(allTextNodes[i].nodeValue);
-      }
-      */
-    }
-  });
-
-  var allowCaretSelection = false;
-  Object.defineProperty(this, "AllowCaretSelection", {
-    get: function () {
-      return allowCaretSelection
-    },
-    set: function (value) {
-      allowCaretSelection = value
-    }
-  });
-
   /* private properties */
-  var self = this;
-  var regex = new WebPageReader.Regex();
+  #self = this
+  #regex = new WebPageReader.Regex();
+
+  /* public properties */
+  #skipCode = true;
+  get SkipCode() {
+    return this.#skipCode;
+  }
+  set SkipCode(value) {
+    this.#skipCode = value.toString() == "true";
+  }
+
+  #allTextNodes = [];
+  get AllTextNodes() {
+    return this.#allTextNodes
+  }
+  set AllTextNodes(value) {
+    this.#allTextNodes = value;
+    /*
+    for(var i = 0; i < allTextNodes.length; i++){
+      console.log(allTextNodes[i].nodeValue);
+    }
+    */
+  }
+
+  #allowCaretSelection = false;
+  get AllowCaretSelection() {
+    return this.#allowCaretSelection
+  }
+  set AllowCaretSelection(value) {
+    this.#allowCaretSelection = value
+  }
 
   /* public methods */
-  this.GetSelectedRange = function () {
+  get SelectedRange() {
     var sel;
     if (window.getSelection) {
       sel = window.getSelection();
-      if ((sel.type == "Range" || allowCaretSelection) && sel.rangeCount) {
+      if ((sel.type == "Range" || this.AllowCaretSelection) && sel.rangeCount) {
         return sel.getRangeAt(0);
       }
     }
     return null;
   }
 
-  this.GetFirstRange = function () {
-    var firstNode = Enumerable.From(allTextNodes).FirstOrDefault(allTextNodes[0], o => regex.NonWhitespace.test(o.nodeValue));
-    return createRange(firstNode, 0, firstNode, 0);
+  get FirstRange() {
+    var self = this
+    var firstNode = Enumerable.From(self.AllTextNodes).FirstOrDefault(self.AllTextNodes[0], o => self.#regex.NonWhitespace.test(o.nodeValue));
+    return this.#createRange(firstNode, 0, firstNode, 0);
   }
 
   // Object.prototype.nullIf = function (value) {
@@ -55,11 +60,11 @@ WebPageReader.Dom = function () {
   //   else return this;
   // }
 
-  this.LoadAllTextNodes = function () {
-    this.AllTextNodes = textNodesUnder(document.body);
+  LoadAllTextNodes() {
+    this.AllTextNodes = this.textNodesUnder(document.body);
   }
 
-  this.SaveSelection = function () {
+  SaveSelection() {
     var win = document.defaultView;
     var range = win.getSelection().getRangeAt(0);
     var preSelectionRange = range.cloneRange();
@@ -73,7 +78,7 @@ WebPageReader.Dom = function () {
     };
   }
 
-  this.RestoreSelection = function (savedSel) {
+  RestoreSelection(savedSel) {
     var win = document.defaultView;
     var charIndex = 0,
       range = document.createRange();
@@ -108,7 +113,7 @@ WebPageReader.Dom = function () {
     sel.addRange(range);
   }
 
-  this.VisualizeRange = function (range, label) {
+  VisualizeRange(range, label) {
     const BeginRangeMarker = '\u25BA';
     const EndRangeMarker = '\u25C4';
     const TextNodeBoundary = '\u2551';
@@ -147,7 +152,7 @@ WebPageReader.Dom = function () {
     console.log(msg);
   }
 
-  this.IsElementInViewport = function (el) {
+  IsElementInViewport(el) {
 
     var rect = el.getBoundingClientRect();
 
@@ -159,54 +164,68 @@ WebPageReader.Dom = function () {
     );
   }
 
-  /* private methods */
-  function createRange(startNode, startIndex, endNode, endIndex) {
+  PreviousTextNode(textNode) {
+    if (textNode.nodeType != 3) throw 'previousTextNode: not a text node';
+    var i = this.AllTextNodes.indexOf(textNode);
+    if (i == -1)
+      throw 'previousTextNode: node is not found in allTextNodes';
+    else if (i === 0)
+      return null;
+    else
+      return this.AllTextNodes[i - 1];
+  }
+
+  NextTextNode(textNode) {
+    if (textNode.nodeType != 3) throw 'nextTextNode: not a text node';
+    var i = this.AllTextNodes.indexOf(textNode);
+    if (i == -1)
+      throw 'nextTextNode: node is not found in allTextNodes';
+    else if (i == this.AllTextNodes.length - 1)
+      return null;
+    else
+      return this.AllTextNodes[i + 1];
+  }
+
+  u  //#region private methods
+  #createRange(startNode, startIndex, endNode, endIndex) {
     var range = new Range();
     range.setStart(startNode, startIndex);
     range.setEnd(endNode, endIndex);
     return range;
   }
 
-  this.getNextTextNode = function (textNode) {
-    if (textNode.nodeType != 3) throw 'nextTextNode: not a text node';
-    var i = allTextNodes.indexOf(textNode);
-    if (i == -1)
-      throw 'nextTextNode: node is not found in allTextNodes';
-    else if (i == allTextNodes.length - 1)
-      return null;
-    else
-      return allTextNodes[i + 1];
-  }
+  textNodesUnder(root) {
+    var excludeTags = ['script', 'style', 'noscript', 'embed', 'meta', 'iframe']
+    if (this.SkipCode)
+      excludeTags = excludeTags.concat(['code', 'pre'])
+    function textElements(node) {
+      //filter out script elements 
+      return !excludeTags.includes(node.parentNode.tagName.toLowerCase()) &&
+        !node.parentNode.closest(excludeTags.join(', ')) &&
+        !node.parentNode.closest(`*[style*='hidden']`) && 
+        !node.parentNode.closest(`*[style*='display:none']`) && 
+        // and empty nodes
+        node.nodeValue !== '' &&
+        // and punctuation only nodes
+        /\w+/ig.test(node.nodeValue) ?
+        NodeFilter.FILTER_ACCEPT :
+        NodeFilter.FILTER_SKIP
+    }
 
-  this.getPreviousTextNode = function (textNode) {
-    if (textNode.nodeType != 3) throw 'previousTextNode: not a text node';
-    var i = allTextNodes.indexOf(textNode);
-    if (i == -1)
-      throw 'previousTextNode: node is not found in allTextNodes';
-    else if (i === 0)
-      return null;
-    else
-      return allTextNodes[i - 1];
-  }
 
-  function textNodesUnder(root) {
     var textNodes = [];
     if (root.nodeType == 3)
       textNodes.push(root);
     else {
-      var treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, getTextElements, false);
+      var treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, textElements, false);
       var node;
       while (node = treeWalker.nextNode())
         textNodes.push(node);
     }
     return textNodes; // Array
   }
-
-  function getTextElements(node) {
-    if (['SCRIPT', 'STYLE'].indexOf(node.parentNode.tagName) !== 0 && node.nodeValue !== '') //filter out script elements and empty elements 
-      return NodeFilter.FILTER_ACCEPT
-    else
-      return NodeFilter.FILTER_SKIP
-  }
+  //#endregion
 
 };
+
+WebPageReader.Dom = Dom

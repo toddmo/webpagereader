@@ -1,23 +1,34 @@
-WebPageReader.Sentence = class extends Range {
-  /*  Sentence understance everything about sentences
-      It has a starting and ending character, and ends with a sentence terminator
-      It can navigate itself around the page
-  */
+/*  Sentence isn't just one sentence. It has all sentences on the page.
+    Sentence understance everything about sentences
+    It has a starting and ending character, and ends with a sentence terminator
+    It can navigate itself around the page
+*/
+class Sentence extends Range {
 
   constructor() {
     super();
     this.dom = new WebPageReader.Dom();
+    this.dom.SkipCode = this.SkipCode
     this.regex = new WebPageReader.Regex();
     this.highlighted = false;
     this.backupHtml = '';
     this.dom.LoadAllTextNodes();
-    this.AlignToRange(this.dom.GetSelectedRange() || this.dom.GetFirstRange())
-    this.collapse(true);
+    this.AlignToRange(this.dom.SelectedRange || this.dom.FirstRange)
+    this.collapse(true); // collapse to start
     this.AlignEndPoints();
     this.Expand();
   }
 
   /* public properties */
+  #skipCode = true;
+  get SkipCode() {
+    return this.#skipCode;
+  }
+  set SkipCode(value) {
+    this.#skipCode = value.toString() == "true";
+    this.dom.SkipCode = this.SkipCode
+  }
+
   get CanPrevious() {
     return !this.StartCharacter.Bof;
   }
@@ -37,8 +48,11 @@ WebPageReader.Sentence = class extends Range {
 
   /* public methods */
   Expand() {
-    this.StartCharacter.Search(this.regex.SentenceTerminator, false);
+    // send start backwards until you hit a sentence terminator
+    this.StartCharacter.Search(this.regex.SentenceTerminator, false); 
+    // then go forwards until you get non-whitespace
     this.StartCharacter.Search(this.regex.NonWhitespace, true);
+    // send end forwards until you hit a sentence terminator
     this.EndCharacter.Search(this.regex.SentenceTerminator, true);
     this.Align();
   }
@@ -82,6 +96,7 @@ WebPageReader.Sentence = class extends Range {
     var selection = window.getSelection();
     selection.removeAllRanges();
     selection.addRange(this);
+
     /*
     document.designMode = 'on';
     document.execCommand("hiliteColor", false, "DodgerBlue");
@@ -187,18 +202,18 @@ WebPageReader.Sentence = class extends Range {
     var allTextNodes = this.dom.AllTextNodes;
     var msg = '';
     var intersects = false;
-    for (var t = 0; t < allTextNodes.length; t++) {
-      var textNode = allTextNodes[t];
+    for (var textNodeIndex = 0; textNodeIndex < allTextNodes.length; textNodeIndex++) {
+      var textNode = allTextNodes[textNodeIndex];
       var value = textNode.nodeValue.replace(/[\n]/g, NewLineIndicator);
       if (this.intersectsNode(textNode)) {
         if (!intersects) {
-          if (!allTextNodes[t + 1] || !this.intersectsNode(allTextNodes[t + 1]))
+          if (!allTextNodes[textNodeIndex + 1] || !this.intersectsNode(allTextNodes[textNodeIndex + 1]))
             // I begin and finish inside this first node
             msg += `${TextNodeBoundary}${value.substring(0, this.startOffset)}${BeginRangeMarker}${value.substring(this.startOffset, this.endOffset)}${EndRangeMarker}${value.substring(this.endOffset)}`;
           else
             // I only begin inside this first node
             msg += `${TextNodeBoundary}${value.substring(0, this.startOffset)}${BeginRangeMarker}${value.substring(this.startOffset)}`;
-        } else if (!allTextNodes[t + 1] || !this.intersectsNode(allTextNodes[t + 1]))
+        } else if (!allTextNodes[textNodeIndex + 1] || !this.intersectsNode(allTextNodes[textNodeIndex + 1]))
           // I end in this node
           msg += `${TextNodeBoundary}${value.substring(0, this.endOffset)}${EndRangeMarker}${value.substring(this.endOffset)}`;
         else
@@ -215,3 +230,6 @@ WebPageReader.Sentence = class extends Range {
     console.log(msg);
   }
 }
+
+WebPageReader.Sentence = Sentence
+

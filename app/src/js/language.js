@@ -1,13 +1,13 @@
-WebPageReader.Language = function () {
+class Language {
 
   /* public methods */
-  this.LanguageName = function (key) {
+  LanguageName (key) {
     key = key.slice(0, 2);
-    var lang = isoLangs[key];
+    var lang = this.#isoLangs[key];
     return lang ? lang.name : undefined;
   }
 
-  var isoLangs = {
+  #isoLangs = {
     "ab": {
       "name": "Abkhaz",
       "nativeName": "аҧсуа"
@@ -738,4 +738,6 @@ WebPageReader.Language = function () {
     }
   }
 }
+
+WebPageReader.Language = Language
 

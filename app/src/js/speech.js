@@ -1,137 +1,156 @@
-WebPageReader.Speech = function () {
+class Speech extends Storable {
 
-  /* events */
-  this.OnSpeakingEnded = null;
-
-  /* constructor */
-  function constructor() {
-    self.Load();
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    setTimeout(loadVoices, 200);
-    chrome.storage.onChanged.addListener(self.Storage_OnChange);
+  constructor() {
+    super()
+    this.OnSpeakingEnded = null;
+    this.OnVoicesChanged = null;
+    this.Load();
+    const loadVoices = () => { this.loadVoices(this) }
+    window.speechSynthesis.onvoiceschanged = loadVoices
+    loadVoices()
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      this.Storage_OnChange(this, changes, namespace)
+    });
   }
 
-  /* private properties */
-  var self = this;
-  var storage = new WebPageReader.Storage(this);
-
   /* public properties */
-  var enabled = true;
-  Object.defineProperty(this, "SpeechEnabled", {
-    get: function () {
-      return enabled
-    },
-    set: function (value) {
-      value = value.toString() == "true";
-      if (value == enabled) return;
-      enabled = value;
-    },
-    enumerable: true
-  });
+  #enabled = true;
+  get Enabled() {
+    return this.#enabled
+  }
+  set Enabled(value) {
+    value = value.toString() == "true";
+    if (value == this.#enabled) return;
+    this.#enabled = value;
+  }
 
-  var voices = null;
-  this.OnVoicesChanged = null;
-  Object.defineProperty(this, "Voices", {
-    get: function () {
-      return voices;
-    },
-    set: function (value) {
-      voices = value;
-      voices.sort(voiceCompare);
-      if (this.OnVoicesChanged) this.OnVoicesChanged(this);
-    },
-    enumerable: true
-  });
+  #rate = 1.0;
+  get Rate() {
+    return this.#rate
+  }
+  set Rate(value) {
+    value = Number(value);
+    if (value == this.#rate) return;
+    this.#rate = value;
+  }
 
-  var rate = 1.0;
-  Object.defineProperty(this, "Rate", {
-    get: function () {
-      return rate
-    },
-    set: function (value) {
-      value = Number(value);
-      if (value == rate) return;
-      rate = value;
-    },
-    enumerable: true
-  });
+  #volume = 1.0;
+  get Volume() {
+    return this.#volume
+  }
+  set Volume(value) {
+    value = Number(value);
+    if (value == this.#volume) return;
+    this.#volume = value;
+  }
 
-  var volume = 1.0;
-  Object.defineProperty(this, "Volume", {
-    get: function () {
-      return volume
-    },
-    set: function (value) {
-      value = Number(value);
-      if (value == volume) return;
-      volume = value;
-    },
-    enumerable: true
-  });
+  #voice = null;
+  get Voice() {
+    return this.#voice
+  }
+  set Voice(value) {
+    console.log(`speech voice set to ${value}`)
+    if (value == this.#voice) return;
+    this.#voice = value;
+    this.saveProperty(new WindowLocalStorage(), 'Voice')
+  }
 
-  var voice = 'native';
-  Object.defineProperty(this, "Voice", {
-    get: function () {
-      return voice
-    },
-    set: function (value) {
-      if (value == voice) return;
-      voice = value;
-    },
-    enumerable: true
-  });
+  #voices = []
+  get Voices() {
+    return this.#voices
+  }
+  set Voices(value) {
+    if (!Array.isArray(value)) return
+    if (value.length == 0) return
+    this.#voices = value;
+    console.log(`${this.Voices.length} Voices set on speech ${this.id}`)
+    this.Voices.sort(this.#voiceCompare);
+    if (this.OnVoicesChanged) {
+      console.log('calling speech voices changed event')
+      this.OnVoicesChanged(this);
+      if (!this.Voice && this.Voices.length)
+        this.Voice = Enumerable.From(this.Voices).First(v => v.name.toLowerCase().includes('english'));
+    }
+  }
 
   /* public methods */
-  this.getType = function () { return "WebPageReader.Speech" }
 
-  this.Speak = function (text) {
-    if (!enabled) return;
+  // bug where it just stops speaking
+  #speakResumeInterval
+  #setInterval() {
+    this.#speakResumeInterval = setInterval(() => {
+      window.speechSynthesis.pause()
+      window.speechSynthesis.resume()
+    }, 10000);
+  }
+  #clearInterval() {
+    clearInterval(this.#speakResumeInterval);
+  }
 
-    var utt = new SpeechSynthesisUtterance(text);
-    utt.voice = Enumerable.From(self.Voices).Single(v => v.name == voice);
-    utt.rate = rate;
-    utt.volume = volume;
+  Speak(text) {
+    console.log(`${this.Voices.length} Voices set on speech ${this.id}`)
+    if (!this.Enabled)
+      return false;
+    else if (this.Voices.length == 0)
+      return false
 
-    utt.onend = function (event) {
-      setTimeout(self.OnSpeakingEnded, 0);
-    };
+    var self = this
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice = Enumerable.From(this.Voices).Single(v => v.name == self.Voice);
+    utterance.rate = this.Rate;
+    utterance.volume = this.Volume;
+
+    utterance.onend = (event) => {
+      this.#clearInterval()
+      setTimeout(this.OnSpeakingEnded, 0)
+    }
     /*
     function _wait() {
       if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
-        self.OnSpeakingEnded();
+        this.OnSpeakingEnded();
         return;
       }
       window.setTimeout(_wait, 200);
     }*/
-    window.speechSynthesis.speak(utt);
+    window.speechSynthesis.speak(utterance);
+    this.#setInterval()
+
     //_wait(); // a quirk that had to be introduced because the onend event wasn't reliable
+    // console.log(`spoke ${text}`)
+    return true
   }
 
-  this.Stop = function () {
+  Stop() {
+    this.#clearInterval()
     var speaking = window.speechSynthesis.speaking;
     window.speechSynthesis.cancel();
     if (!speaking)
-      setTimeout(self.OnSpeakingEnded, 0); // mimic speaking end event
+      setTimeout(this.OnSpeakingEnded, 0); // mimic speaking end event
   }
 
-  this.Pause = function () {
+  Pause() {
+    this.#clearInterval()
     window.speechSynthesis.pause();
   }
 
-  this.Resume = function () {
+  Resume() {
     window.speechSynthesis.resume();
+    this.#setInterval()
   }
 
-  this.Load = function () {
-    storage.Load(storage.Types.Sync);
+  Load() {
+    console.log(`speech loading `)
+    this.load(new ChromeSyncStorage())
+    this.load(new WindowLocalStorage())
   }
 
   /* private methods */
-  function loadVoices() {
-    self.Voices = window.speechSynthesis.getVoices();
+  loadVoices(self) {
+    if (window.speechSynthesis.getVoices().length)
+      self.Voices = window.speechSynthesis.getVoices()
   }
 
-  function voiceCompare(a, b) {
+  #voiceCompare(a, b) {
     if (a.lang < b.lang) {
       return -1;
     }
@@ -143,8 +162,8 @@ WebPageReader.Speech = function () {
   }
 
   /* event handlers */
-  this.Storage_OnChange = function (changes, namespace) {
-    for (key in changes) {
+  Storage_OnChange(self, changes, namespace) {
+    for (var key in changes) {
       var storageChange = changes[key];
       console.log('Storage key "%s" in namespace "%s" changed. ' +
         'Old value was "%s", new value is "%s".',
@@ -153,8 +172,8 @@ WebPageReader.Speech = function () {
         storageChange.oldValue,
         storageChange.newValue);
       switch (key) {
-        case 'WebPageReader.Speech.SpeechEnabled':
-          self.SpeechEnabled = storageChange.newValue;
+        case 'WebPageReader.Speech.Enabled':
+          self.Enabled = storageChange.newValue;
           break;
         case 'WebPageReader.Speech.Voice':
           self.Voice = storageChange.newValue;
@@ -166,10 +185,9 @@ WebPageReader.Speech = function () {
           self.Volume = storageChange.newValue;
           break;
       };
-        
     }
   }
-
-  constructor();  // finally call constructor
 }
+
+WebPageReader.Speech = Speech
 

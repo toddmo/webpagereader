@@ -1,292 +1,334 @@
-WebPageReader.Reader = function () {
-  /*  reading = speaking + highlighting
-      the reader contains a sentence and speech
-      it follows a media player pattern (play, stop, next, previous, pause, resume)
-      it raises events so media ui controls can update their state
-  */
+/*  reading = speaking + highlighting
+    the reader contains a sentence and speech
+    it follows a media player pattern (play, stop, next, previous, pause, resume)
+    it raises events so media ui controls can update their state
+*/
+class Reader extends Storable {
 
-  /* enumerations */
-  const intentions = {
-    Normal: 1,
-    Next: 2,
-    Previous: 3
-  };
-
-  /* constructor */
-  function constructor() {
-    load();
+  constructor() {
+    super()
+    this.#load();
 
     // commands from control panel and background (chrome commands)
-    chrome.runtime.onMessage.addListener(self.Runtime_OnMessage);
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      this.Runtime_OnMessage(this, request, sendResponse)
+    });
+
+    this.Speech.OnSpeakingEnded = () => this.Speech_OnSpeakingEnded(this);
 
     // speed keys
-    document.onkeydown = Document_Onkeydown;
+    document.onkeydown = (ev) => {
+      this.Document_Onkeydown(this, ev);
+    }
 
-    document.addEventListener('visibilitychange', () => {
-      getActive();
-    });
-    window.addEventListener('focus', () => {
-      getActive();
-    });
-    window.addEventListener('blur', () => {
-      getActive();
-    });
-    getActive();
+    const thisGetActive = () => { this.#getActive(this) }
+    document.addEventListener('visibilitychange', thisGetActive);
+    window.addEventListener('focus', thisGetActive);
+    window.addEventListener('blur', thisGetActive);
+    thisGetActive();
+  }
+
+  /* enumerations */
+  get Intentions() {
+    return {
+      Normal: 1,
+      Next: 2,
+      Previous: 3
+    }
   }
 
   /* private properties */
-  var self = this;
-  var sentence = null;
-  var storage = new WebPageReader.Storage(this);
-  var intention = intentions.Normal;
-
-  /* public properties */
-  var speech = new WebPageReader.Speech(storage);
-  speech.OnSpeakingEnded = Speech_OnSpeakingEnded; // catch this event from speech
-  Object.defineProperty(this, "Speech", {
-    value: speech,
-    writable: false
-  });
-
-  var active = false;
-  Object.defineProperty(this, "Active", {
-    get: function () {
-      return active
-    },
-    set: function (value) {
-      value = value.toString() == "true";
-      if (value == active) return;
-      active = value;
-      if (active) {
-        save();
-        // send state to control panel
-        chrome.runtime.sendMessage({
-          name: 'OnActivated',
-          source: self
-        });
-
-      }
-    }
-  });
-
-  var reading = false;
-  this.OnReadingChanged = null;
-  Object.defineProperty(this, "Reading", {
-    get: function () {
-      return reading
-    },
-    set: function (value) {
-      reading = value.toString() == "true";
-      saveProperty('Reading');
-      if (this.OnReadingChanged) this.OnReadingChanged(this);
-    },
-    enumerable: true
-  });
-
-  var paused = false;
-  this.OnPausedChanged = null;
-  Object.defineProperty(this, "Paused", {
-    get: function () {
-      return paused
-    },
-    set: function (value) {
-      paused = value.toString() == "true";
-      saveProperty('Paused');
-      if (this.OnPausedChanged) this.OnPausedChanged(this);
-    },
-    enumerable: true
-  });
-
-  var canNext = false;
-  this.OnCanNextChanged = null;
-  Object.defineProperty(this, "CanNext", {
-    get: function () {
-      return canNext
-    },
-    set: function (value) {
-      canNext = value.toString() == "true";
-      saveProperty('CanNext');
-      if (this.OnCanNextChanged) this.OnCanNextChanged(this);
-    },
-    enumerable: true
-  });
-
-  var canPrevious = false;
-  this.OnCanPreviousChanged = null;
-  Object.defineProperty(this, "CanPrevious", {
-    get: function () {
-      return canPrevious
-    },
-    set: function (value) {
-      canPrevious = value.toString() == "true";
-      saveProperty('CanPrevious');
-      if (this.OnCanPreviousChanged) this.OnCanPreviousChanged(this);
-    },
-    enumerable: true
-  });
-
-  /* public methods */
-  this.getType = function () { return "WebPageReader.Reader" }
-
-  this.Start = function () {
-    sentence = new WebPageReader.Sentence();
-    read();
+  #intention = this.Intentions.Normal;
+  get Intention() {
+    return this.#intention
+  }
+  set Intention(value) {
+    this.#intention = value
   }
 
-  this.Stop = function () {
+  #sentence = null
+  get Sentence() {
+    return this.#sentence
+  }
+  set Sentence(value) {
+    this.#sentence = value
+  }
+  #retreating = false;
+
+  /* public properties */
+  #speech = new WebPageReader.Speech();
+  get Speech() {
+    return this.#speech
+  }
+
+  #active = false
+  get Active() {
+    return this.#active
+  }
+  set Active(value) {
+    value = value.toString() == "true";
+    if (value == this.#active) return;
+    this.#active = value;
+    if (this.#active) {
+      this.#save()
+      // send state to control panel
+      chrome.runtime.sendMessage({
+        name: 'OnActivated',
+        source: this.obj
+      });
+    }
+  }
+
+  #reading = false
+  get Reading() {
+    return this.#reading
+  }
+  set Reading(value) {
+    value = value.toString() == "true";
+    if (value == this.#reading) return;
+    this.#reading = value;
+    this.#saveProperty('Reading');
+    if (this.OnReadingChanged) this.OnReadingChanged(this);
+  }
+
+  #paused = false
+  get Paused() {
+    return this.#paused
+  }
+  set Paused(value) {
+    value = value.toString() == "true";
+    if (value == this.#paused) return;
+    this.#paused = value;
+    this.#saveProperty('Paused');
+    if (this.OnPausedChanged) this.OnPausedChanged(this);
+  }
+
+  #canPrevious = false
+  get CanPrevious() {
+    return this.#canPrevious
+  }
+  set CanPrevious(value) {
+    value = value.toString() == "true";
+    if (value == this.#canPrevious) return;
+    this.#canPrevious = value;
+    this.#saveProperty('CanPrevious');
+    if (this.OnCanPreviousChanged) this.OnCanPreviousChanged(this);
+  }
+
+  #canNext = false
+  get CanNext() {
+    return this.#canNext
+  }
+  set CanNext(value) {
+    value = value.toString() == "true";
+    if (value == this.#canNext) return;
+    this.#canNext = value;
+    this.#saveProperty('CanNext');
+    if (this.OnCanNextChanged) this.OnCanNextChanged(this);
+  }
+
+  #skipCode = true;
+  get SkipCode() {
+    return this.#skipCode;
+  }
+  set SkipCode(value) {
+    this.#skipCode = value.toString() == "true";
+    if (this.Sentence)
+      this.Sentence.SkipCode = this.SkipCode
+  }
+
+  #highlightBackColor = `rgba(255,255,0,0.4)`
+  get HighlightBackColor() {
+    return this.#highlightBackColor
+  }
+  set HighlightBackColor(value) {
+    this.#highlightBackColor = value
+    this.#createSelectionStyle()
+  }
+
+  #highlightForeColor = `#333`
+  get HighlightForeColor() {
+    return this.#highlightForeColor
+  }
+  set HighlightForeColor(value) {
+    this.#highlightForeColor = value
+    this.#createSelectionStyle()
+  }
+
+  #createSelectionStyle() {
+    var styleTag
+    var id = 'highlight-style'
+    styleTag = document.getElementById(id)
+    if (!styleTag) {
+      styleTag = document.createElement('style')
+      styleTag.setAttribute('id', id)
+      document.body.appendChild(styleTag)
+    }
+    styleTag.innerText = `::selection { background-color: ${this.HighlightBackColor} !important;
+    color:${this.HighlightForeColor} !important}`
+  }
+
+
+  Start(self) {
+    self.Sentence = new WebPageReader.Sentence();
+    self.Sentence.SkipCode = self.SkipCode
+    self.#read(self);
+  }
+
+  Stop(self) {
     self.Reading = false;
     self.Paused = false;
     self.CanPrevious = false;
     self.CanNext = false;
-    speech.Stop();
+    self.Speech.Stop();
   }
 
-  this.Pause = function () {
+  Pause(self) {
     self.Paused = true;
     self.CanPrevious = false;
     self.CanNext = false;
-    speech.Pause();
+    self.Speech.Pause();
   }
 
-  this.Resume = function () {
+  Resume(self) {
     self.Paused = false;
-    self.CanPrevious = sentence.CanPrevious;
-    self.CanNext = sentence.CanNext;
-    sentence.Highlight();
-    speech.Resume();
+    self.CanPrevious = self.Sentence.CanPrevious;
+    self.CanNext = self.Sentence.CanNext;
+    self.Sentence.Highlight();
+    self.Speech.Resume();
   }
 
-  this.Next = function () {
-    intention = intentions.Next;
-    speech.Stop();
+  Next(self) {
+    self.Intention = self.Intentions.Next;
+    self.Speech.Stop();
   }
 
-  this.Previous = function () {
-    intention = intentions.Previous;
-    speech.Stop();
+  Previous(self) {
+    self.Intention = self.Intentions.Previous;
+    self.Speech.Stop();
   }
 
   /* private methods */
-  var retreating = false;
-  function advance() {
-    if (!reading || !sentence)
-      self.Start();
-    else if (reading && paused)
-      self.Resume();
-    else if (reading)
-      self.Next();
-    retreating = false;
+  #advance(self) {
+    if (!self.Reading || !self.Sentence)
+      self.Start(self);
+    else if (self.Reading && self.Paused)
+      self.Resume(self);
+    else if (self.Reading)
+      self.Next(self);
+    self.#retreating = false;
   }
 
-  function retreat() {
-    if (!retreating && reading) {
-      self.Pause();
+  #retreat(self) {
+    if (!self.#retreating && self.Reading) {
+      self.Pause(self);
     }
-    else if (reading) {
-      if (paused)
-        self.Resume();
-      self.Previous();
+    else if (self.Reading) {
+      if (self.Paused)
+        self.Resume(self);
+      self.Previous(self);
     }
-    retreating = true;
+    self.#retreating = true;
   }
 
-  function arrest() {
-    if (reading && !paused)
-      self.Pause();
-    else if (reading)
-      self.Stop();
+  #arrest(self) {
+    if (self.Reading && !self.Paused)
+      self.Pause(self);
+    else if (self.Reading)
+      self.Stop(self);
   }
 
-  function louder() {
-    speech.Volume = Math.min(speech.Volume + 0.1, 1.0);
+  #louder(self) {
+    self.Speech.Volume = Math.min(self.Speech.Volume + 0.1, 1.0);
   }
 
-  function softer() {
-    speech.Volume = Math.max(speech.Volume - 0.1, 0.0);
+  #softer(self) {
+    self.Speech.Volume = Math.max(self.Speech.Volume - 0.1, 0.0);
   }
 
-  function faster() {
-    speech.Rate = Math.min(speech.Rate + 0.1, 1.5);
+  #faster(self) {
+    self.Speech.Rate = Math.min(self.Speech.Rate + 0.1, 1.5);
   }
 
-  function slower() {
-    speech.Rate = Math.max(speech.Rate - 0.1, 0.0);
+  #slower(self) {
+    self.Speech.Rate = Math.max(self.Speech.Rate - 0.1, 0.0);
   }
 
-  function getActive() {
-    chrome.extension.sendRequest(chrome.runtime.id, "isSelected", function (isSelected) {
-      if (isSelected) {
-        //this tab in focus
-        self.Active = true;//!document.hidden;
-      } else {
-        //not in focus
-        self.Active = false;
-      }
+  #getActive(self) {
+    chrome.runtime.sendMessage(chrome.runtime.id, "isSelected", function (isSelected) {
+      //this tab is in focus or not
+      self.Active = isSelected;
     });
   }
 
-  function load() {
-    storage.Load(storage.Types.Session); // reader state is per tab
-    speech.Load(); // speech settings are global
+  #load() {
+    // reader state is per tab
+    this.load(new WindowSessionStorage())
+    this.Speech.Load(); // speech settings are global
   }
 
-  function save() {
-    storage.Save(storage.Types.Session); // so I will pick up my own state upon reload
-    storage.Save(storage.Types.Sync); // so control panel can pick up my state
+  #save() {
+    // so I will pick up my own state upon reload
+    this.save(new WindowSessionStorage())
+    // so control panel can pick up my state
+    this.save(new ChromeSyncStorage())
   }
 
-  function saveProperty(setting) {
-    storage.Save(storage.Types.Sync, null, setting);
+  #saveProperty(property) {
+    this.saveProperty(new WebPageReader.ChromeSyncStorage(), property)
   }
 
-  function read() {
-    intention = intentions.Normal;
+  #read(self) {
+    self.Intention = self.Intentions.Normal;
     self.Reading = true;
-    self.CanPrevious = sentence.CanPrevious;
-    self.CanNext = sentence.CanNext;
+    self.CanPrevious = self.Sentence.CanPrevious;
+    self.CanNext = self.Sentence.CanNext;
     //sentence.Visualize();
-    sentence.Highlight();
-    speech.Speak(sentence.toString());
+    self.Sentence.Highlight();
+    self.Speech.Speak(self.Sentence.toString());
     return true;
   }
 
-  function readNext() {
+  #readNext(self) {
     if (!self.Reading || !self.Active) return;
-    retreating = false;
-    sentence.Unhighlight();
-    sentence.Next();
-    setTimeout(read, 0);
+    self.#retreating = false;
+    self.Sentence.Unhighlight();
+    self.Sentence.Next();
+    setTimeout(self.#read(self), 0);
   }
 
   /* event handlers */
-  function Document_Onkeydown(ev) {
-    if (!active || 
-        ev.shiftKey || ev.ctrlKey || ev.altKey || 
-        ['INPUT', 'TEXTAREA'].indexOf(ev.srcElement.nodeName) > -1 ||
-        ev.srcElement.getAttribute("contenteditable") != null)
+  Document_Onkeydown(self, ev) {
+    if (
+      !self.Active ||
+      ev.shiftKey ||
+      ev.ctrlKey ||
+      ev.altKey ||
+      ['INPUT', 'TEXTAREA'].indexOf(ev.srcElement.nodeName) > -1 ||
+      ev.srcElement.getAttribute("contenteditable") != null)
       return true;
 
     switch (ev.key) {
       case 'ArrowRight':
-        advance();
+        self.#advance(self);
         break;
       case 'ArrowLeft':
-        retreat();
+        self.#retreat(self);
         break;
       case 'Escape':
-        arrest();
+        self.#arrest(self);
         break;
       case '+':
-        louder();
+        self.#louder(self);
         break;
       case '-':
-        softer();
+        self.#softer(self);
         break;
       case '8':
-        faster();
+        self.#faster(self);
         break;
       case '2':
-        slower();
+        self.#slower(self);
         break;
       default:
         //console.log(ev.key);
@@ -295,44 +337,44 @@ WebPageReader.Reader = function () {
     return false; // handled; cancel keydown event 
   }
 
-  function Speech_OnSpeakingEnded() {
-    console.log(`Speech_OnSpeakingEnded = ${intention}`);
-    switch (intention) {
-      case intentions.Previous:
-        sentence.Previous();
-        setTimeout(read, 200);
+  Speech_OnSpeakingEnded(self) {
+    console.log(`Speech_OnSpeakingEnded = ${self.#intention}`);
+    switch (self.Intention) {
+      case self.Intentions.Previous:
+        self.Sentence.Previous();
+        setTimeout(self.#read(self), 200);
         break;
-      case intentions.Next:
-        sentence.Next();
-        setTimeout(read, 200);
+      case self.Intentions.Next:
+        self.Sentence.Next();
+        setTimeout(self.#read(self), 200);
         break;
-      case intentions.Normal:
+      case self.Intentions.Normal:
       default:
-        readNext();
+        self.#readNext(self);
     }
   }
 
-  this.Runtime_OnMessage = function (request, sender, sendResponse) {
+  Runtime_OnMessage(self, request, sendResponse) {
     //console.log(sender.tab ?      "from a content script:" + sender.tab.url :      "from the extension");
 
     switch (request.command) {
       case 'start':
-        self.Start();
+        self.Start(self);
         break;
       case 'stop':
-        self.Stop();
+        self.Stop(self);
         break;
       case 'pause':
-        self.Pause();
+        self.Pause(self);
         break;
       case 'resume':
-        self.Resume();
+        self.Resume(self);
         break;
       case 'next':
-        self.Next();
+        self.Next(self);
         break;
       case 'previous':
-        self.Previous();
+        self.Previous(self);
         break;
       case 'setting':
         switch (request.setting) {
@@ -358,6 +400,13 @@ WebPageReader.Reader = function () {
     sendResponse({ outcome: 'success' });
   }
 
-  constructor(); // finally call the constructor
+  static get ignore() {
+    return Storable.ignore.concat([
+      'Sentence',
+      'Active'
+    ])
+  }
 
-};
+}
+
+WebPageReader.Reader = Reader

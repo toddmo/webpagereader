@@ -1,86 +1,129 @@
-/* Classes */
-WebPageReader.Storage = class {
-  constructor(object) {
-    /* enumerations */
-    this.Types = {
-      Local: 1,
-      Session: 2,
-      Sync: 3
-    };
-    this.Object = object;
+class Storage {
+  constructor() {
   }
 
-  /* public methods */
-  Load(storageType, objectType) {
-    objectType = objectType || this.Object.getType();
-    var self = this;
-    for (var property in this.Object) {
-      if (this.Object.hasOwnProperty(property)) {
-        if (['object', 'function'].indexOf(typeof this.Object[property]) == -1) {
-          var propertyName = `${objectType}.${property}`;
-          var value;
-          switch (storageType) {
-            case this.Types.Local:
-              value = localStorage.getItem(propertyName);
-              if (value) {
-                this.Object[property] = value;
-                console.log(`loaded local ${this.Object.getType()}: ${propertyName} = ${value}`);
-              }
-              break;
-            case this.Types.Session:
-              value = sessionStorage.getItem(propertyName);
-              if (value) {
-                this.Object[property] = value;
-                console.log(`loaded local ${this.Object.getType()}: ${propertyName} = ${value}`);
-              }
-              break;
-            case this.Types.Sync:
-              chrome.storage.sync.get(propertyName,
-                function (setting) {
-                  for (var settingProperty in setting) {
-                    var name = settingProperty.substring(settingProperty.lastIndexOf('.') + 1);
-                    var value = setting[settingProperty];
-                    self.Object[name] = value;
-                    console.log(`loaded sync ${self.Object.getType()}: ${settingProperty} = ${value}`);
-                  }
-                }
-              );
-              break;
-          }
-        }
-      }
+  #type//object type
+  get type() {
+    return this.#type
+  }
+  set type(value) {
+    this.#type = value
+  }
+
+  #property
+  get property() {
+    return this.#property
+  }
+  set property(value) {
+    this.#property = value
+  }
+
+  get key() {
+    return `WebPageReader.${this.type}.${this.property}`
+  }
+
+  get value() {
+    return this.storage.getItem(this.key);
+  }
+  set value(value) {
+    this.storage.setItem(this.key, value);
+  }
+
+  get storage() {
+  }
+
+  async load(storable) {
+    this.type = storable.type
+    for (var propertyName of storable.properties) {
+      this.property = propertyName
+      var value = await this.value
+      if (typeof value !== 'undefined' && value != null)
+        storable[propertyName] = value
     }
   }
 
-  Save(storageType, object, setting) {
-    object = object || this.Object;
-    for (var property in object) {
-      if (!setting || setting == property && object.hasOwnProperty(property)) {
-        if (['object', 'function'].indexOf(typeof object[property]) == -1) {
-          var propertyName = `${object.getType()}.${property}`;
-          var value;
-          switch (storageType) {
-            case this.Types.Local:
-              value = this.Object[property];
-              localStorage.setItem(propertyName, value);
-              console.log(`saved local ${propertyName} = ${value}`);
-              break;
-            case this.Types.Session:
-              value = this.Object[property];
-              sessionStorage.setItem(propertyName, value);
-              console.log(`saved local ${propertyName} = ${value}`);
-              break;
-            case this.Types.Sync:
-              var settingObject = new Object();
-              value = this.Object[property];
-              settingObject[propertyName] = value;
-              chrome.storage.sync.set(settingObject);
-              console.log(`saved sync ${propertyName} = ${value}`);
-              break;
-          }
-        }
-      }
-    }
+  saveProperty(storable, property) {
+    this.type = storable.type
+    this.property = property
+    if (typeof storable[property] !== 'undefined')
+      this.value = storable[property]
+  }
+
+  save(storable) {
+    storable.properties.forEach(property => this.saveProperty(storable, property));
   }
 }
+
+// lifetime: forever, scope: current browser
+class WindowLocalStorage extends Storage {
+  get storage() {
+    return window.localStorage
+  }
+}
+
+// lifetime: webpage, scope: current browser
+class WindowSessionStorage extends Storage {
+  get storage() {
+    return window.sessionStorage
+  }
+
+}
+
+// lifetime: forever, scope: all logged in browsers
+class ChromeSyncStorage extends Storage {
+
+  get storage() {
+    return chrome.storage.sync
+  }
+
+  get value() {
+    return (async () => {
+      try {
+        var setting = await this.storage.get(this.key)
+        return setting[this.property];
+      } catch (e) {
+        return null; // fallback value;
+      }
+    })();
+  }
+  set value(value) {
+    var settingObject = {};
+    settingObject[this.key] = value;
+    this.storage.set(settingObject);
+  }
+
+}
+
+// lifetime: forever, scope: all logged in browsers
+class ChromeLocalStorage extends Storage {
+
+  get storage() {
+    return chrome.storage.local
+  }
+
+  get value() {
+    return (async () => {
+      try {
+        var setting = await this.storage.get(this.key)
+        return setting[this.property];
+      } catch (e) {
+        return null; // fallback value;
+      }
+    })();
+  }
+  set value(value) {
+    var settingObject = {};
+    settingObject[this.key] = value;
+    this.storage.set(settingObject);
+  }
+
+}
+
+WebPageReader.WindowLocalStorage = WindowLocalStorage
+WebPageReader.WindowSessionStorage = WindowSessionStorage
+WebPageReader.ChromeSyncStorage = ChromeSyncStorage
+WebPageReader.ChromeLocalStorage = ChromeLocalStorage
+
+
+
 

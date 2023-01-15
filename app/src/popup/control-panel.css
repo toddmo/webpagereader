@@ -1,9 +1,9 @@
 body {
   text-align: center;
-  background-image: -webkit-gradient(linear, left top, left bottom, from(Menu), to(ThreeDHighlight));
-  background-image: -webkit-linear-gradient(top, Menu, ThreeDHighlight);
-  background-image: -moz-linear-gradient(top, Menu, ThreeDHighlight);
-  background-image: linear-gradient(to bottom, Menu, ThreeDHighlight);
+  background-image: -webkit-gradient(linear, left top, left bottom, from(ThreeDHighlight), to(black));
+  background-image: -webkit-linear-gradient(top, ThreeDHighlight, black);
+  background-image: -moz-linear-gradient(top, ThreeDHighlight, black);
+  background-image: linear-gradient(to bottom, ThreeDHighlight, black);
 }
 
 .panel-group {
@@ -17,7 +17,7 @@ body {
 }
 
 #options {
-  background-image: linear-gradient(to bottom, Menu, ThreeDHighlight);
+  background-image: linear-gradient(to bottom, ThreeDHighlight, black);
 }
 
 .btn-group .btn {

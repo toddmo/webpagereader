@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+
+<head>
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+    crossorigin="anonymous">
+
+  <link rel="stylesheet" href="control-panel.css" />
+  <script type="text/javascript" src="../../lib/jquery-3.1.0.min.js"></script>
+  <script type="text/javascript" src="../../lib/bootstrap.min.js"></script>
+</head>
+
+<body>
+
+  <div class="panel-group">
+    <div class="panel panel-default">
+      <div class="panel-heading  text-left">
+        <h4 class="panel-title">
+          <span class="glyphicon glyphicon-sunglasses" aria-hidden="true"></span>&nbsp;Reader Controls
+        </h4>
+      </div>
+      <div class="btn-group">
+        <button id="btnStop" class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-stop" aria-hidden="true" ></span>&nbsp;Stop</button>
+        <button id="previous" class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-backward" aria-hidden="true"></span>&nbsp;Previous</button>
+        <button id="start" class="btn btn-success btn-sm play-control"><span class="glyphicon glyphicon-play" aria-hidden="true"></span>&nbsp;Start</button>
+        <button id="pause" class="btn btn-warning btn-sm play-control"><span class="glyphicon glyphicon-pause" aria-hidden="true" ></span>&nbsp;Pause</button>
+        <button id="resume" class="btn btn-success btn-sm play-control"><span class="glyphicon glyphicon-play-circle" aria-hidden="true"></span>&nbsp;Resume</button>
+        <button id="next" class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-forward" aria-hidden="true"></span>&nbsp;Next</button>
+      </div>
+    </div>
+    <div class="panel panel-default">
+      <div class="panel-heading  text-left">
+        <h4 class="panel-title">
+          <a id="optionslink" data-toggle="collapse" href="#options"><span class="glyphicon glyphicon-cog" aria-hidden="true" ></span>&nbsp;Options</a>
+        </h4>
+      </div>
+      <div id="options" class="panel-collapse collapse text-left">
+        <div class="form-group">
+          <label for="lstVoices">Voice</label>
+          <select id="lstVoices" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label id="lblRate" for="rngRate"><output name="outRate" id="outRate">Rate</output></label>
+          <input id="rngRate" type="range" min="0.5" max="1.5" step="0.1" value="1" />
+        </div>
+        <div class="form-group">
+          <label id="lblVolume" for="rngVolume"><output name="outVolume" id="outVolume">Volume</output></label>
+          <input id="rngVolume" type="range" min="0" max="1" step="0.1" value="1" />
+        </div>
+        <div class="form-group">
+          <label id="lblSpeechEnabled" for="chkSpeechEnabled">Speech Enabled</label>
+
+          <label class="switch">
+            <input id="chkSpeechEnabled" type="checkbox" checked />
+            <div class="slider round"/>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/namespaces.js"></script>
+  <script src="../js/language.js"></script>
+  <script src="../js/storage.js"></script>
+  <script src="../js/speech.js"></script>
+  <script src="control-panel.js"></script>
+</body>
+
+</html>
